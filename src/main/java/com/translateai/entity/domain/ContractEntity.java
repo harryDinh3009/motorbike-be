@@ -62,10 +62,6 @@ public class ContractEntity extends PrimaryEntity {
     @Column(name = "status", nullable = false, length = 20)
     private ContractStatus status = ContractStatus.NEW;
 
-    /** URL file hợp đồng PDF */
-    @Column(name = "contract_file_url", length = 500)
-    private String contractFileUrl;
-
     /** Ghi chú hợp đồng */
     @Lob
     @Column(name = "notes")

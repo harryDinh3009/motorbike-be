@@ -33,7 +33,6 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                    con.surcharge_amount AS surchargeAmount,
                    con.final_amount AS finalAmount,
                    con.status,
-                   con.contract_file_url AS contractFileUrl,
                    con.notes,
                    con.actual_end_date AS actualEndDate
             FROM contract con

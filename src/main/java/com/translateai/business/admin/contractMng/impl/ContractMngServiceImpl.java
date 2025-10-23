@@ -36,8 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -263,7 +262,7 @@ public class ContractMngServiceImpl implements ContractMngService {
 
     @Override
     @Transactional
-    public String generateContractPDF(String id) {
+    public byte[] downloadContractPDF(String id) {
         Optional<ContractEntity> contractEntityFind = contractRepository.findById(id);
         if (!contractEntityFind.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
@@ -272,19 +271,9 @@ public class ContractMngServiceImpl implements ContractMngService {
         ContractEntity contract = contractEntityFind.get();
         
         try {
-            // Tạo thư mục nếu chưa có
-            String uploadDir = "uploads/contracts/";
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            
-            // Tạo tên file
-            String fileName = "contract_" + contract.getId() + "_" + System.currentTimeMillis() + ".pdf";
-            String filePath = uploadDir + fileName;
-            
-            // Tạo PDF
-            PdfWriter writer = new PdfWriter(new FileOutputStream(filePath));
+            // Tạo PDF trong memory (ByteArrayOutputStream)
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc);
             
@@ -402,11 +391,8 @@ public class ContractMngServiceImpl implements ContractMngService {
             
             document.close();
             
-            // Cập nhật URL file vào contract
-            contract.setContractFileUrl("/" + filePath);
-            contractRepository.save(contract);
-            
-            return filePath;
+            // Trả về byte array
+            return baos.toByteArray();
             
         } catch (Exception e) {
             throw new RestApiException(ApiStatus.INTERNAL_SERVER_ERROR);

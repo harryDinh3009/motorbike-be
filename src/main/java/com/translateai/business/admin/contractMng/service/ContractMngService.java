@@ -49,12 +49,12 @@ public interface ContractMngService {
     Boolean deleteContract(String id);
 
     /**
-     * Sinh file PDF hợp đồng
+     * Tải xuống file PDF hợp đồng (generate và trả về trực tiếp)
      *
      * @param id ID hợp đồng
-     * @return String URL của file PDF
+     * @return byte[] Nội dung file PDF
      */
-    String generateContractPDF(String id);
+    byte[] downloadContractPDF(String id);
 
     /**
      * Thêm phụ phí cho hợp đồng

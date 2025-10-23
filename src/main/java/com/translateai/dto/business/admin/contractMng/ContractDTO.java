@@ -62,9 +62,6 @@ public class ContractDTO {
     /** Tên trạng thái hiển thị */
     private String statusNm;
 
-    /** URL file hợp đồng PDF */
-    private String contractFileUrl;
-
     /** Ghi chú */
     private String notes;
 
