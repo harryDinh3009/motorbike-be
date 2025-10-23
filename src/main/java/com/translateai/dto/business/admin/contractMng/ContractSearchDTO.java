@@ -9,14 +9,19 @@ import lombok.Setter;
 @Setter
 public class ContractSearchDTO extends PageableDTO {
 
+    /** ID khách hàng (lọc theo khách hàng) */
     private String customerId;
 
+    /** ID xe (lọc theo xe) */
     private String carId;
 
+    /** Trạng thái hợp đồng (lọc theo trạng thái) */
     private ContractStatus status;
 
+    /** Ngày bắt đầu từ (lọc theo khoảng thời gian) */
     private Long startDateFrom;
 
+    /** Ngày bắt đầu đến (lọc theo khoảng thời gian) */
     private Long startDateTo;
 }
 

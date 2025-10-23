@@ -18,21 +18,27 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CustomerEntity extends PrimaryEntity {
 
+    /** Họ và tên khách hàng */
     @Column(name = "full_name", nullable = false, length = 200)
     private String fullName;
 
+    /** Số điện thoại */
     @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
 
+    /** Địa chỉ email */
     @Column(name = "email", length = 100)
     private String email;
 
+    /** Số CCCD/CMND */
     @Column(name = "citizen_id", length = 20)
     private String citizenId;
 
+    /** Địa chỉ thường trú */
     @Column(name = "address", length = 500)
     private String address;
 
+    /** Số giấy phép lái xe */
     @Column(name = "driver_license", length = 50)
     private String driverLicense;
 }

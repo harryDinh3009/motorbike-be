@@ -9,10 +9,13 @@ import lombok.Setter;
 @Setter
 public class CarSearchDTO extends PageableDTO {
 
+    /** Tên xe (tìm kiếm theo tên) */
     private String name;
 
+    /** Biển số xe (tìm kiếm theo biển số) */
     private String licensePlate;
 
+    /** Trạng thái xe (lọc theo trạng thái) */
     private CarStatus status;
 }
 

@@ -22,24 +22,33 @@ import java.util.Set;
 @Data
 public class MenuEntity {
 
+    /** ID menu */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Loại trang (Admin, User...) */
     private String siteType;
 
+    /** Tên menu */
     private String name;
 
+    /** Đường dẫn route */
     private String route;
 
+    /** ID menu cha (menu cấp trên) */
     private Long parentId;
 
+    /** URL phụ */
     private String subUrl;
 
+    /** Thứ tự hiển thị */
     private Integer displayOrder;
 
+    /** Cờ xóa (Y/N) */
     private String deleteFlag;
 
+    /** Danh sách vai trò có quyền truy cập menu này */
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "menu_role", joinColumns = {@JoinColumn(name = "menuId")}, inverseJoinColumns = {@JoinColumn (name = "roleId")})
     @ToString.Exclude

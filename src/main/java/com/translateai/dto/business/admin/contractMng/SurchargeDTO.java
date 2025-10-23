@@ -9,14 +9,19 @@ import java.math.BigDecimal;
 @Setter
 public class SurchargeDTO {
 
+    /** ID phụ phí */
     private String id;
 
+    /** ID hợp đồng */
     private String contractId;
 
+    /** Mô tả phụ phí */
     private String description;
 
+    /** Số tiền phụ phí */
     private BigDecimal amount;
 
+    /** Ghi chú */
     private String notes;
 }
 

@@ -10,22 +10,31 @@ import java.math.BigDecimal;
 @Setter
 public class CarDTO {
 
+    /** ID xe */
     private String id;
 
+    /** Tên xe */
     private String name;
 
+    /** Biển số xe */
     private String licensePlate;
 
+    /** Loại xe */
     private String carType;
 
+    /** Giá thuê theo ngày */
     private BigDecimal dailyPrice;
 
+    /** Trạng thái xe */
     private CarStatus status;
 
+    /** Tên trạng thái hiển thị */
     private String statusNm;
 
+    /** URL hình ảnh xe */
     private String imageUrl;
 
+    /** Mô tả xe */
     private String description;
 }
 

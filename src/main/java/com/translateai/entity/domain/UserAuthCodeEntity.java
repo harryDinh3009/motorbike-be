@@ -25,9 +25,11 @@ import org.hibernate.annotations.DynamicUpdate;
 @Table(name = "user_auth_code")
 public class UserAuthCodeEntity extends PrimaryEntity {
 
+    /** Email người dùng */
     @Column(length = EntityProperties.LENGTH_ID)
     String email;
 
+    /** Mã xác thực (OTP) */
     @Column(length = EntityProperties.LENGTH_CODE)
     String code;
 

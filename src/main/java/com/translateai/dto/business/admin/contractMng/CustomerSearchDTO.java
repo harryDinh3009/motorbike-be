@@ -8,10 +8,13 @@ import lombok.Setter;
 @Setter
 public class CustomerSearchDTO extends PageableDTO {
 
+    /** Họ và tên (tìm kiếm theo tên) */
     private String fullName;
 
+    /** Số điện thoại (tìm kiếm theo SĐT) */
     private String phoneNumber;
 
+    /** Số CCCD/CMND (tìm kiếm theo số giấy tờ) */
     private String citizenId;
 }
 
