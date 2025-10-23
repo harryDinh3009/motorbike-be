@@ -112,6 +112,9 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-websocket
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '3.4.0'
+
+    // iText PDF for contract generation
+    implementation 'com.itextpdf:itext7-core:7.2.5'
 }
 
 tasks.named('test') {

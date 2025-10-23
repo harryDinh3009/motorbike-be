@@ -71,7 +71,8 @@ public enum ApiStatus {
     UNPROCESSABLE_ENTITY(HttpStatus.UNPROCESSABLE_ENTITY, "422001", "Unable to process the provided data."),
 
     // ===== 5xx: Server Errors =====
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500001", "An unexpected server error occurred.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500001", "An unexpected server error occurred."),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "500002", "Bad request");
 
     private final HttpStatus httpStatus;
     private final String code;
