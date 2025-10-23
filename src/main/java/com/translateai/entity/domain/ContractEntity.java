@@ -21,13 +21,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ContractEntity extends PrimaryEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "car_id", nullable = false)
-    private CarEntity car;
+    @Column(name = "car_id", nullable = false, length = 36)
+    private String carId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
-    private CustomerEntity customer;
+    @Column(name = "customer_id", nullable = false, length = 36)
+    private String customerId;
 
     @Column(name = "start_date", nullable = false)
     private Long startDate;
@@ -57,7 +55,8 @@ public class ContractEntity extends PrimaryEntity {
     @Column(name = "contract_file_url", length = 500)
     private String contractFileUrl;
 
-    @Column(name = "notes", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "notes")
     private String notes;
 
     @Column(name = "actual_end_date")

@@ -40,7 +40,8 @@ public class CarEntity extends PrimaryEntity {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "description")
     private String description;
 }
 

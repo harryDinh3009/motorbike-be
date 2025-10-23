@@ -60,7 +60,7 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
 
     List<ContractEntity> findByCustomerId(String customerId);
 
-    @Query("SELECT c FROM ContractEntity c WHERE c.car.id = :carId AND c.status = :status AND c.endDate >= :currentDate")
+    @Query("SELECT c FROM ContractEntity c WHERE c.carId = :carId AND c.status = :status AND c.endDate >= :currentDate")
     List<ContractEntity> findActiveContractsByCarId(@Param("carId") String carId, 
                                                       @Param("status") ContractStatus status, 
                                                       @Param("currentDate") Long currentDate);

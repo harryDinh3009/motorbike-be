@@ -83,13 +83,25 @@ public class ContractMngServiceImpl implements ContractMngService {
         ContractEntity contract = contractEntity.get();
         ContractDTO contractDTO = new ContractDTO();
         
+        // Lấy thông tin xe
+        Optional<CarEntity> carEntity = carRepository.findById(contract.getCarId());
+        if (!carEntity.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+        
+        // Lấy thông tin khách hàng
+        Optional<CustomerEntity> customerEntity = customerRepository.findById(contract.getCustomerId());
+        if (!customerEntity.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+        
         contractDTO.setId(contract.getId());
-        contractDTO.setCarId(contract.getCar().getId());
-        contractDTO.setCarName(contract.getCar().getName());
-        contractDTO.setLicensePlate(contract.getCar().getLicensePlate());
-        contractDTO.setCustomerId(contract.getCustomer().getId());
-        contractDTO.setCustomerName(contract.getCustomer().getFullName());
-        contractDTO.setPhoneNumber(contract.getCustomer().getPhoneNumber());
+        contractDTO.setCarId(contract.getCarId());
+        contractDTO.setCarName(carEntity.get().getName());
+        contractDTO.setLicensePlate(carEntity.get().getLicensePlate());
+        contractDTO.setCustomerId(contract.getCustomerId());
+        contractDTO.setCustomerName(customerEntity.get().getFullName());
+        contractDTO.setPhoneNumber(customerEntity.get().getPhoneNumber());
         contractDTO.setStartDate(contract.getStartDate());
         contractDTO.setEndDate(contract.getEndDate());
         contractDTO.setRentalDays(contract.getRentalDays());
@@ -141,8 +153,8 @@ public class ContractMngServiceImpl implements ContractMngService {
                 throw new RestApiException(ApiStatus.BAD_REQUEST);
             }
             
-            contractEntity.setCar(carEntity.get());
-            contractEntity.setCustomer(customerEntity.get());
+            contractEntity.setCarId(carEntity.get().getId());
+            contractEntity.setCustomerId(customerEntity.get().getId());
             contractEntity.setStatus(ContractStatus.NEW);
             
             // Tính toán số ngày thuê
@@ -188,7 +200,13 @@ public class ContractMngServiceImpl implements ContractMngService {
         }
         
         ContractEntity contractEntity = contractEntityFind.get();
-        CarEntity carEntity = contractEntity.getCar();
+        
+        // Lấy thông tin xe
+        Optional<CarEntity> carEntityOpt = carRepository.findById(contractEntity.getCarId());
+        if (!carEntityOpt.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+        CarEntity carEntity = carEntityOpt.get();
         
         ContractStatus oldStatus = contractEntity.getStatus();
         ContractStatus newStatus = updateStatusDTO.getStatus();
@@ -287,27 +305,41 @@ public class ContractMngServiceImpl implements ContractMngService {
             document.add(new Paragraph("Ngày tạo: " + sdf.format(new Date(contract.getCreatedDate()))));
             document.add(new Paragraph("\n"));
             
+            // Lấy thông tin khách hàng
+            Optional<CustomerEntity> customerEntity = customerRepository.findById(contract.getCustomerId());
+            if (!customerEntity.isPresent()) {
+                throw new RestApiException(ApiStatus.NOT_FOUND);
+            }
+            CustomerEntity customer = customerEntity.get();
+            
+            // Lấy thông tin xe
+            Optional<CarEntity> carEntity = carRepository.findById(contract.getCarId());
+            if (!carEntity.isPresent()) {
+                throw new RestApiException(ApiStatus.NOT_FOUND);
+            }
+            CarEntity car = carEntity.get();
+            
             // Thông tin khách hàng
             document.add(new Paragraph("THÔNG TIN KHÁCH HÀNG").setBold());
-            document.add(new Paragraph("Họ tên: " + contract.getCustomer().getFullName()));
-            document.add(new Paragraph("Số điện thoại: " + contract.getCustomer().getPhoneNumber()));
-            if (StringUtils.isNotBlank(contract.getCustomer().getEmail())) {
-                document.add(new Paragraph("Email: " + contract.getCustomer().getEmail()));
+            document.add(new Paragraph("Họ tên: " + customer.getFullName()));
+            document.add(new Paragraph("Số điện thoại: " + customer.getPhoneNumber()));
+            if (StringUtils.isNotBlank(customer.getEmail())) {
+                document.add(new Paragraph("Email: " + customer.getEmail()));
             }
-            if (StringUtils.isNotBlank(contract.getCustomer().getCitizenId())) {
-                document.add(new Paragraph("CCCD/CMND: " + contract.getCustomer().getCitizenId()));
+            if (StringUtils.isNotBlank(customer.getCitizenId())) {
+                document.add(new Paragraph("CCCD/CMND: " + customer.getCitizenId()));
             }
-            if (StringUtils.isNotBlank(contract.getCustomer().getAddress())) {
-                document.add(new Paragraph("Địa chỉ: " + contract.getCustomer().getAddress()));
+            if (StringUtils.isNotBlank(customer.getAddress())) {
+                document.add(new Paragraph("Địa chỉ: " + customer.getAddress()));
             }
             document.add(new Paragraph("\n"));
             
             // Thông tin xe
             document.add(new Paragraph("THÔNG TIN XE THUÊ").setBold());
-            document.add(new Paragraph("Tên xe: " + contract.getCar().getName()));
-            document.add(new Paragraph("Biển số: " + contract.getCar().getLicensePlate()));
-            if (StringUtils.isNotBlank(contract.getCar().getCarType())) {
-                document.add(new Paragraph("Loại xe: " + contract.getCar().getCarType()));
+            document.add(new Paragraph("Tên xe: " + car.getName()));
+            document.add(new Paragraph("Biển số: " + car.getLicensePlate()));
+            if (StringUtils.isNotBlank(car.getCarType())) {
+                document.add(new Paragraph("Loại xe: " + car.getCarType()));
             }
             document.add(new Paragraph("\n"));
             
@@ -397,7 +429,7 @@ public class ContractMngServiceImpl implements ContractMngService {
         
         if (isNew) {
             surchargeEntity = new SurchargeEntity();
-            surchargeEntity.setContract(contractEntity);
+            surchargeEntity.setContractId(contractEntity.getId());
         } else {
             Optional<SurchargeEntity> surchargeEntityFind = surchargeRepository.findById(saveDTO.getId());
             if (!surchargeEntityFind.isPresent()) {
@@ -434,7 +466,7 @@ public class ContractMngServiceImpl implements ContractMngService {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
         
-        String contractId = surchargeEntity.get().getContract().getId();
+        String contractId = surchargeEntity.get().getContractId();
         
         surchargeRepository.deleteById(id);
         

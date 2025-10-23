@@ -20,9 +20,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class SurchargeEntity extends PrimaryEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contract_id", nullable = false)
-    private ContractEntity contract;
+    @Column(name = "contract_id", nullable = false, length = 36)
+    private String contractId;
 
     @Column(name = "description", nullable = false, length = 500)
     private String description;
@@ -30,7 +29,8 @@ public class SurchargeEntity extends PrimaryEntity {
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "notes", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "notes")
     private String notes;
 }
 
