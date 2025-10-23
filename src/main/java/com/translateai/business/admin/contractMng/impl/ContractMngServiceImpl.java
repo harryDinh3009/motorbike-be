@@ -56,7 +56,7 @@ public class ContractMngServiceImpl implements ContractMngService {
 
     @Override
     public PageableObject<ContractDTO> searchContracts(ContractSearchDTO searchDTO) {
-        Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
+        Pageable pageable = PageRequest.of(searchDTO.getPage(), searchDTO.getSize());
         Page<ContractDTO> contractPage = contractRepository.searchContracts(pageable, searchDTO);
         
         // Map status description và load surcharges
@@ -110,7 +110,6 @@ public class ContractMngServiceImpl implements ContractMngService {
         contractDTO.setFinalAmount(contract.getFinalAmount());
         contractDTO.setStatus(contract.getStatus());
         contractDTO.setStatusNm(contract.getStatus().getDescription());
-        contractDTO.setContractFileUrl(contract.getContractFileUrl());
         contractDTO.setNotes(contract.getNotes());
         contractDTO.setActualEndDate(contract.getActualEndDate());
         

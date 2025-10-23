@@ -27,8 +27,8 @@ public class ContractMngController {
      * @param searchDTO DTO tìm kiếm
      * @return PageableObject<ContractDTO>
      */
-    @GetMapping("/list")
-    public ApiResponse<PageableObject<ContractDTO>> searchContracts(ContractSearchDTO searchDTO) {
+    @PostMapping("/list")
+    public ApiResponse<PageableObject<ContractDTO>> searchContracts(@RequestBody ContractSearchDTO searchDTO) {
         PageableObject<ContractDTO> pageableRes = contractMngService.searchContracts(searchDTO);
         return new ApiResponse<>(ApiStatus.SUCCESS, pageableRes);
     }
