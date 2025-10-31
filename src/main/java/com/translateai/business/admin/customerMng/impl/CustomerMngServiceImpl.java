@@ -1,12 +1,13 @@
-package com.translateai.business.admin.contractMng.impl;
+package com.translateai.business.admin.customerMng.impl;
 
-import com.translateai.business.admin.contractMng.service.CustomerMngService;
+import com.translateai.business.admin.customerMng.service.CustomerMngService;
 import com.translateai.common.ApiStatus;
 import com.translateai.common.PageableObject;
+import com.translateai.config.cloudinary.CloudinaryUploadImages;
 import com.translateai.config.exception.RestApiException;
-import com.translateai.dto.business.admin.contractMng.CustomerDTO;
-import com.translateai.dto.business.admin.contractMng.CustomerSaveDTO;
-import com.translateai.dto.business.admin.contractMng.CustomerSearchDTO;
+import com.translateai.dto.business.admin.customerMng.CustomerDTO;
+import com.translateai.dto.business.admin.customerMng.CustomerSaveDTO;
+import com.translateai.dto.business.admin.customerMng.CustomerSearchDTO;
 import com.translateai.entity.domain.CustomerEntity;
 import com.translateai.repository.business.admin.CustomerRepository;
 import jakarta.validation.Valid;
@@ -19,7 +20,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 public class CustomerMngServiceImpl implements CustomerMngService {
 
     private final CustomerRepository customerRepository;
+    private final CloudinaryUploadImages cloudinaryUploadImages;
     private final ModelMapper modelMapper;
 
     @Override
@@ -57,6 +61,7 @@ public class CustomerMngServiceImpl implements CustomerMngService {
 
         if (isNew) {
             customerEntity = new CustomerEntity();
+            customerEntity.setTotalSpent(BigDecimal.ZERO);
         } else {
             Optional<CustomerEntity> customerEntityFind = customerRepository.findById(saveDTO.getId());
             if (!customerEntityFind.isPresent()) {
@@ -68,9 +73,17 @@ public class CustomerMngServiceImpl implements CustomerMngService {
         customerEntity.setFullName(saveDTO.getFullName());
         customerEntity.setPhoneNumber(saveDTO.getPhoneNumber());
         customerEntity.setEmail(saveDTO.getEmail());
-        customerEntity.setCitizenId(saveDTO.getCitizenId());
+        customerEntity.setDateOfBirth(saveDTO.getDateOfBirth());
+        customerEntity.setGender(saveDTO.getGender());
+        customerEntity.setCountry(saveDTO.getCountry());
         customerEntity.setAddress(saveDTO.getAddress());
+        customerEntity.setCitizenId(saveDTO.getCitizenId());
+        customerEntity.setCitizenIdImageUrl(saveDTO.getCitizenIdImageUrl());
         customerEntity.setDriverLicense(saveDTO.getDriverLicense());
+        customerEntity.setDriverLicenseImageUrl(saveDTO.getDriverLicenseImageUrl());
+        customerEntity.setPassport(saveDTO.getPassport());
+        customerEntity.setPassportImageUrl(saveDTO.getPassportImageUrl());
+        customerEntity.setNote(saveDTO.getNote());
 
         customerRepository.save(customerEntity);
         return true;
@@ -94,6 +107,57 @@ public class CustomerMngServiceImpl implements CustomerMngService {
         return customers.stream()
                 .map(customer -> modelMapper.map(customer, CustomerDTO.class))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public String uploadCitizenIdImage(String customerId, MultipartFile file) {
+        Optional<CustomerEntity> customerEntity = customerRepository.findById(customerId);
+        if (!customerEntity.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+
+        String imageUrl = cloudinaryUploadImages.uploadImage(file, "customer/citizen_id");
+        
+        CustomerEntity customer = customerEntity.get();
+        customer.setCitizenIdImageUrl(imageUrl);
+        customerRepository.save(customer);
+
+        return imageUrl;
+    }
+
+    @Override
+    @Transactional
+    public String uploadDriverLicenseImage(String customerId, MultipartFile file) {
+        Optional<CustomerEntity> customerEntity = customerRepository.findById(customerId);
+        if (!customerEntity.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+
+        String imageUrl = cloudinaryUploadImages.uploadImage(file, "customer/driver_license");
+        
+        CustomerEntity customer = customerEntity.get();
+        customer.setDriverLicenseImageUrl(imageUrl);
+        customerRepository.save(customer);
+
+        return imageUrl;
+    }
+
+    @Override
+    @Transactional
+    public String uploadPassportImage(String customerId, MultipartFile file) {
+        Optional<CustomerEntity> customerEntity = customerRepository.findById(customerId);
+        if (!customerEntity.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+
+        String imageUrl = cloudinaryUploadImages.uploadImage(file, "customer/passport");
+        
+        CustomerEntity customer = customerEntity.get();
+        customer.setPassportImageUrl(imageUrl);
+        customerRepository.save(customer);
+
+        return imageUrl;
     }
 }
 

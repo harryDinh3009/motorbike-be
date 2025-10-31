@@ -1,7 +1,7 @@
 package com.translateai.repository.business.admin;
 
-import com.translateai.dto.business.admin.contractMng.CustomerDTO;
-import com.translateai.dto.business.admin.contractMng.CustomerSearchDTO;
+import com.translateai.dto.business.admin.customerMng.CustomerDTO;
+import com.translateai.dto.business.admin.customerMng.CustomerSearchDTO;
 import com.translateai.entity.domain.CustomerEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,25 +20,40 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, String
                    c.full_name AS fullName,
                    c.phone_number AS phoneNumber,
                    c.email,
-                   c.citizen_id AS citizenId,
+                   c.date_of_birth AS dateOfBirth,
+                   c.gender,
+                   c.country,
                    c.address,
-                   c.driver_license AS driverLicense
+                   c.citizen_id AS citizenId,
+                   c.citizen_id_image_url AS citizenIdImageUrl,
+                   c.driver_license AS driverLicense,
+                   c.driver_license_image_url AS driverLicenseImageUrl,
+                   c.passport,
+                   c.passport_image_url AS passportImageUrl,
+                   c.note,
+                   c.total_spent AS totalSpent
             FROM customer c
-            WHERE (:#{#req.fullName} IS NULL OR :#{#req.fullName} = '' OR c.full_name LIKE %:#{#req.fullName}%)
-            AND (:#{#req.phoneNumber} IS NULL OR :#{#req.phoneNumber} = '' OR c.phone_number LIKE %:#{#req.phoneNumber}%)
-            AND (:#{#req.citizenId} IS NULL OR :#{#req.citizenId} = '' OR c.citizen_id LIKE %:#{#req.citizenId}%)
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
+                   OR c.full_name LIKE %:#{#req.keyword}% 
+                   OR c.phone_number LIKE %:#{#req.keyword}%
+                   OR c.email LIKE %:#{#req.keyword}%)
+            AND (:#{#req.country} IS NULL OR :#{#req.country} = '' OR c.country = :#{#req.country})
             ORDER BY c.created_date DESC
             """, countQuery = """
             SELECT COUNT(c.id)
             FROM customer c
-            WHERE (:#{#req.fullName} IS NULL OR :#{#req.fullName} = '' OR c.full_name LIKE %:#{#req.fullName}%)
-            AND (:#{#req.phoneNumber} IS NULL OR :#{#req.phoneNumber} = '' OR c.phone_number LIKE %:#{#req.phoneNumber}%)
-            AND (:#{#req.citizenId} IS NULL OR :#{#req.citizenId} = '' OR c.citizen_id LIKE %:#{#req.citizenId}%)
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
+                   OR c.full_name LIKE %:#{#req.keyword}% 
+                   OR c.phone_number LIKE %:#{#req.keyword}%
+                   OR c.email LIKE %:#{#req.keyword}%)
+            AND (:#{#req.country} IS NULL OR :#{#req.country} = '' OR c.country = :#{#req.country})
             """, nativeQuery = true)
     Page<CustomerDTO> searchCustomers(Pageable pageable, @Param("req") CustomerSearchDTO req);
 
     CustomerEntity findByPhoneNumber(String phoneNumber);
 
-    List<CustomerEntity> findByFullNameContaining(String fullName);
+    CustomerEntity findByEmail(String email);
+
+    List<CustomerEntity> findByCountry(String country);
 }
 
