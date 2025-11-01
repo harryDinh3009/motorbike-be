@@ -39,9 +39,9 @@ public class SurchargeTypeMngServiceImpl implements SurchargeTypeMngService {
 
         return PageableObject.<SurchargeTypeDTO>builder()
                 .data(page.getContent())
-                .totalRecord(page.getTotalElements())
+                .totalRecords(page.getTotalElements())
                 .currentPage(searchDTO.getPage())
-                .totalPage(page.getTotalPages())
+                .totalPages(page.getTotalPages())
                 .build();
     }
 
