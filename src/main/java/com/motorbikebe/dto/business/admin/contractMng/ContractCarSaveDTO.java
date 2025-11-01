@@ -1,0 +1,27 @@
+package com.motorbikebe.dto.business.admin.contractMng;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+
+/**
+ * DTO để lưu xe trong hợp đồng
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class ContractCarSaveDTO {
+    private String id;
+    private String carId;
+    private BigDecimal dailyPrice;
+    private BigDecimal hourlyPrice;
+    private BigDecimal totalAmount;
+    private Integer startOdometer;
+    private Integer endOdometer;
+    private String notes;
+}
+
