@@ -1,5 +1,6 @@
 package com.translateai.business.admin.contractMng.web;
 
+import com.translateai.business.admin.contractMng.excel.ContractExcelService;
 import com.translateai.business.admin.contractMng.service.ContractMngService;
 import com.translateai.common.ApiResponse;
 import com.translateai.common.ApiStatus;
@@ -11,21 +12,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * Controller quản lý hợp đồng (đã nâng cấp hoàn toàn)
+ */
 @RestController
 @RequestMapping("/a/contract-mng")
 @RequiredArgsConstructor
 public class ContractMngController {
 
     private final ContractMngService contractMngService;
+    private final ContractExcelService contractExcelService;
+
+    // ========== CRUD Operations ==========
 
     /**
      * Tìm kiếm hợp đồng với phân trang
-     *
-     * @param searchDTO DTO tìm kiếm
-     * @return PageableObject<ContractDTO>
      */
     @PostMapping("/list")
     public ApiResponse<PageableObject<ContractDTO>> searchContracts(@RequestBody ContractSearchDTO searchDTO) {
@@ -35,21 +43,15 @@ public class ContractMngController {
 
     /**
      * Lấy chi tiết hợp đồng
-     *
-     * @param id ID hợp đồng
-     * @return ContractDTO
      */
-    @GetMapping("/detail")
-    public ApiResponse<ContractDTO> getContractDetail(@RequestParam("id") String id) {
+    @GetMapping("/detail/{id}")
+    public ApiResponse<ContractDTO> getContractDetail(@PathVariable String id) {
         ContractDTO response = contractMngService.getContractDetail(id);
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }
 
     /**
      * Tạo mới hoặc cập nhật hợp đồng
-     *
-     * @param saveDTO DTO lưu hợp đồng
-     * @return Boolean
      */
     @PostMapping("/save")
     public ApiResponse<Boolean> saveContract(@RequestBody ContractSaveDTO saveDTO) {
@@ -58,37 +60,159 @@ public class ContractMngController {
     }
 
     /**
-     * Cập nhật trạng thái hợp đồng (Giao xe, Nhận xe)
-     *
-     * @param updateStatusDTO DTO cập nhật trạng thái
-     * @return Boolean
-     */
-    @PostMapping("/update-status")
-    public ApiResponse<Boolean> updateContractStatus(@RequestBody ContractUpdateStatusDTO updateStatusDTO) {
-        Boolean response = contractMngService.updateContractStatus(updateStatusDTO);
-        return new ApiResponse<>(ApiStatus.SUCCESS, response);
-    }
-
-    /**
      * Xóa hợp đồng
-     *
-     * @param id ID hợp đồng
-     * @return Boolean
      */
-    @DeleteMapping("/delete")
-    public ApiResponse<Boolean> deleteContract(@RequestParam("id") String id) {
+    @DeleteMapping("/delete/{id}")
+    public ApiResponse<Boolean> deleteContract(@PathVariable String id) {
         Boolean response = contractMngService.deleteContract(id);
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }
 
+    // ========== Contract Cars ==========
+
     /**
-     * Tải xuống file PDF hợp đồng (generate và trả về trực tiếp)
-     *
-     * @param id ID hợp đồng
-     * @return File PDF
+     * Lấy danh sách xe trong hợp đồng
      */
-    @GetMapping("/download-pdf")
-    public ResponseEntity<byte[]> downloadContractPDF(@RequestParam("id") String id) {
+    @GetMapping("/cars/{contractId}")
+    public ApiResponse<List<ContractCarDTO>> getContractCars(@PathVariable String contractId) {
+        List<ContractCarDTO> response = contractMngService.getContractCars(contractId);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    // ========== Surcharges Management ==========
+
+    /**
+     * Thêm phụ thu cho hợp đồng
+     */
+    @PostMapping("/surcharge/add")
+    public ApiResponse<Boolean> addSurcharge(@RequestBody SurchargeSaveDTO saveDTO) {
+        Boolean response = contractMngService.addSurcharge(saveDTO);
+        return new ApiResponse<>(ApiStatus.CREATED, response);
+    }
+
+    /**
+     * Xóa phụ thu
+     */
+    @DeleteMapping("/surcharge/delete/{id}")
+    public ApiResponse<Boolean> deleteSurcharge(@PathVariable String id) {
+        Boolean response = contractMngService.deleteSurcharge(id);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Lấy danh sách phụ thu theo hợp đồng
+     */
+    @GetMapping("/surcharge/list/{contractId}")
+    public ApiResponse<List<SurchargeDTO>> getSurchargesByContractId(@PathVariable String contractId) {
+        List<SurchargeDTO> response = contractMngService.getSurchargesByContractId(contractId);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    // ========== Payment Management ==========
+
+    /**
+     * Thêm thanh toán cho hợp đồng
+     */
+    @PostMapping("/payment/add")
+    public ApiResponse<Boolean> addPayment(@RequestBody PaymentTransactionSaveDTO saveDTO) {
+        Boolean response = contractMngService.addPayment(saveDTO);
+        return new ApiResponse<>(ApiStatus.CREATED, response);
+    }
+
+    /**
+     * Xóa thanh toán
+     */
+    @DeleteMapping("/payment/delete/{id}")
+    public ApiResponse<Boolean> deletePayment(@PathVariable String id) {
+        Boolean response = contractMngService.deletePayment(id);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Lấy lịch sử thanh toán
+     */
+    @GetMapping("/payment/history/{contractId}")
+    public ApiResponse<List<PaymentTransactionDTO>> getPaymentHistory(@PathVariable String contractId) {
+        List<PaymentTransactionDTO> response = contractMngService.getPaymentHistory(contractId);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    // ========== Delivery Process ==========
+
+    /**
+     * Cập nhật thông tin giao xe
+     */
+    @PostMapping("/delivery/update")
+    public ApiResponse<Boolean> updateDelivery(@RequestBody ContractDeliveryDTO deliveryDTO) {
+        Boolean response = contractMngService.updateDelivery(deliveryDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Upload ảnh giao xe (nhiều ảnh)
+     */
+    @PostMapping(value = "/delivery/upload-images/{contractId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ApiResponse<Map<String, Object>> uploadDeliveryImages(
+            @PathVariable String contractId,
+            @RequestParam("files") List<MultipartFile> files) {
+        
+        List<String> imageUrls = contractMngService.uploadDeliveryImages(contractId, files);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("count", imageUrls.size());
+        response.put("imageUrls", imageUrls);
+        response.put("message", "Upload thành công " + imageUrls.size() + " ảnh");
+        
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    // ========== Return Process ==========
+
+    /**
+     * Cập nhật thông tin nhận xe
+     */
+    @PostMapping("/return/update")
+    public ApiResponse<Boolean> updateReturn(@RequestBody ContractReturnDTO returnDTO) {
+        Boolean response = contractMngService.updateReturn(returnDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Upload ảnh nhận xe (nhiều ảnh)
+     */
+    @PostMapping(value = "/return/upload-images/{contractId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ApiResponse<Map<String, Object>> uploadReturnImages(
+            @PathVariable String contractId,
+            @RequestParam("files") List<MultipartFile> files) {
+        
+        List<String> imageUrls = contractMngService.uploadReturnImages(contractId, files);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("count", imageUrls.size());
+        response.put("imageUrls", imageUrls);
+        response.put("message", "Upload thành công " + imageUrls.size() + " ảnh");
+        
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    // ========== Complete Contract ==========
+
+    /**
+     * Đóng hợp đồng (hoàn thành thanh toán)
+     */
+    @PostMapping("/complete")
+    public ApiResponse<Boolean> completeContract(@RequestBody ContractCompleteDTO completeDTO) {
+        Boolean response = contractMngService.completeContract(completeDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    // ========== PDF Generation ==========
+
+    /**
+     * Tải xuống file PDF hợp đồng
+     */
+    @GetMapping("/download-pdf/{id}")
+    public ResponseEntity<byte[]> downloadContractPDF(@PathVariable String id) {
         try {
             byte[] pdfBytes = contractMngService.downloadContractPDF(id);
 
@@ -103,40 +227,21 @@ public class ContractMngController {
         }
     }
 
-    /**
-     * Thêm phụ phí cho hợp đồng
-     *
-     * @param saveDTO DTO lưu phụ phí
-     * @return Boolean
-     */
-    @PostMapping("/surcharge/add")
-    public ApiResponse<Boolean> addSurcharge(@RequestBody SurchargeSaveDTO saveDTO) {
-        Boolean response = contractMngService.addSurcharge(saveDTO);
-        return new ApiResponse<>(ApiStatus.CREATED, response);
-    }
+    // ========== Excel Export ==========
 
     /**
-     * Xóa phụ phí
-     *
-     * @param id ID phụ phí
-     * @return Boolean
+     * Xuất danh sách hợp đồng ra Excel theo điều kiện tìm kiếm
      */
-    @DeleteMapping("/surcharge/delete")
-    public ApiResponse<Boolean> deleteSurcharge(@RequestParam("id") String id) {
-        Boolean response = contractMngService.deleteSurcharge(id);
-        return new ApiResponse<>(ApiStatus.SUCCESS, response);
-    }
-
-    /**
-     * Lấy danh sách phụ phí theo hợp đồng
-     *
-     * @param contractId ID hợp đồng
-     * @return List<SurchargeDTO>
-     */
-    @GetMapping("/surcharge/list")
-    public ApiResponse<List<SurchargeDTO>> getSurchargesByContractId(@RequestParam("contractId") String contractId) {
-        List<SurchargeDTO> response = contractMngService.getSurchargesByContractId(contractId);
-        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    @PostMapping("/export-excel")
+    public ResponseEntity<byte[]> exportContractsToExcel(@RequestBody ContractSearchDTO searchDTO) {
+        ByteArrayOutputStream out = contractExcelService.exportContracts(searchDTO);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Danh_Sach_Hop_Dong.xlsx");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(out.toByteArray());
     }
 }
-

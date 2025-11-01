@@ -1,52 +1,58 @@
 package com.translateai.dto.business.admin.contractMng;
 
 import com.translateai.constant.enumconstant.ContractStatus;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
 
+/**
+ * DTO để tạo/cập nhật hợp đồng
+ */
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ContractSaveDTO {
-
-    /** ID hợp đồng (null khi tạo mới) */
     private String id;
-
-    /** ID xe */
-    private String carId;
-
-    /** ID khách hàng */
+    
+    @NotBlank(message = "Khách hàng không được để trống")
     private String customerId;
-
-    /** Ngày bắt đầu thuê */
-    private Long startDate;
-
-    /** Ngày kết thúc thuê dự kiến */
-    private Long endDate;
-
-    /** Số ngày thuê */
-    private Integer rentalDays;
-
-    /** Giá thuê theo ngày */
-    private BigDecimal dailyPrice;
-
-    /** Tổng tiền thuê (chưa bao gồm phụ phí) */
-    private BigDecimal totalAmount;
-
-    /** Tổng phụ phí */
-    private BigDecimal surchargeAmount;
-
-    /** Tổng tiền cuối cùng */
-    private BigDecimal finalAmount;
-
-    /** Trạng thái hợp đồng */
-    private ContractStatus status;
-
-    /** Ghi chú */
+    
+    private String source; // Walk-in, Facebook, Hotline, Zalo
+    
+    @NotNull(message = "Ngày thuê không được để trống")
+    private Date startDate;
+    
+    @NotNull(message = "Ngày trả không được để trống")
+    private Date endDate;
+    
+    private String pickupBranchId;
+    private String returnBranchId;
+    private String pickupAddress;
+    private String returnAddress;
+    private Boolean needPickupDelivery;
+    private Boolean needReturnDelivery;
     private String notes;
-
-    /** Ngày trả xe thực tế */
-    private Long actualEndDate;
+    
+    // Danh sách xe thuê
+    @NotNull(message = "Phải có ít nhất 1 xe")
+    private List<ContractCarSaveDTO> cars;
+    
+    // Danh sách phụ thu
+    private List<SurchargeSaveDTO> surcharges;
+    
+    // Thông tin thanh toán
+    private String discountType; // PERCENTAGE / AMOUNT
+    private BigDecimal discountValue;
+    private BigDecimal depositAmount;
+    
+    // Trạng thái
+    private ContractStatus status;
 }
-

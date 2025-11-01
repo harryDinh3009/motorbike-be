@@ -3,81 +3,109 @@ package com.translateai.business.admin.contractMng.service;
 import com.translateai.common.PageableObject;
 import com.translateai.dto.business.admin.contractMng.*;
 import jakarta.validation.Valid;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+/**
+ * Service quản lý hợp đồng (đã nâng cấp)
+ */
 public interface ContractMngService {
 
     /**
      * Tìm kiếm hợp đồng với phân trang
-     *
-     * @param searchDTO DTO tìm kiếm
-     * @return PageableObject<ContractDTO>
      */
     PageableObject<ContractDTO> searchContracts(ContractSearchDTO searchDTO);
 
     /**
      * Lấy chi tiết hợp đồng
-     *
-     * @param id ID hợp đồng
-     * @return ContractDTO
      */
     ContractDTO getContractDetail(String id);
 
     /**
      * Tạo mới hoặc cập nhật hợp đồng
-     *
-     * @param saveDTO DTO lưu hợp đồng
-     * @return Boolean
      */
     Boolean saveContract(@Valid ContractSaveDTO saveDTO);
 
     /**
-     * Cập nhật trạng thái hợp đồng (Giao xe, Nhận xe)
-     *
-     * @param updateStatusDTO DTO cập nhật trạng thái
-     * @return Boolean
-     */
-    Boolean updateContractStatus(@Valid ContractUpdateStatusDTO updateStatusDTO);
-
-    /**
      * Xóa hợp đồng
-     *
-     * @param id ID hợp đồng
-     * @return Boolean
      */
     Boolean deleteContract(String id);
 
+    // ========== Contract Cars ==========
+    
     /**
-     * Tải xuống file PDF hợp đồng (generate và trả về trực tiếp)
-     *
-     * @param id ID hợp đồng
-     * @return byte[] Nội dung file PDF
+     * Lấy danh sách xe trong hợp đồng
      */
-    byte[] downloadContractPDF(String id);
+    List<ContractCarDTO> getContractCars(String contractId);
 
+    // ========== Surcharges ==========
+    
     /**
-     * Thêm phụ phí cho hợp đồng
-     *
-     * @param saveDTO DTO lưu phụ phí
-     * @return Boolean
+     * Thêm phụ thu cho hợp đồng
      */
     Boolean addSurcharge(@Valid SurchargeSaveDTO saveDTO);
 
     /**
-     * Xóa phụ phí
-     *
-     * @param id ID phụ phí
-     * @return Boolean
+     * Xóa phụ thu
      */
     Boolean deleteSurcharge(String id);
 
     /**
-     * Lấy danh sách phụ phí theo hợp đồng
-     *
-     * @param contractId ID hợp đồng
-     * @return List<SurchargeDTO>
+     * Lấy danh sách phụ thu theo hợp đồng
      */
     List<SurchargeDTO> getSurchargesByContractId(String contractId);
-}
 
+    // ========== Payments ==========
+    
+    /**
+     * Thêm thanh toán cho hợp đồng
+     */
+    Boolean addPayment(@Valid PaymentTransactionSaveDTO saveDTO);
+
+    /**
+     * Xóa thanh toán
+     */
+    Boolean deletePayment(String id);
+
+    /**
+     * Lấy lịch sử thanh toán
+     */
+    List<PaymentTransactionDTO> getPaymentHistory(String contractId);
+
+    // ========== Delivery & Return ==========
+    
+    /**
+     * Cập nhật thông tin giao xe
+     */
+    Boolean updateDelivery(@Valid ContractDeliveryDTO deliveryDTO);
+
+    /**
+     * Upload ảnh giao xe
+     */
+    List<String> uploadDeliveryImages(String contractId, List<MultipartFile> files);
+
+    /**
+     * Cập nhật thông tin nhận xe
+     */
+    Boolean updateReturn(@Valid ContractReturnDTO returnDTO);
+
+    /**
+     * Upload ảnh nhận xe
+     */
+    List<String> uploadReturnImages(String contractId, List<MultipartFile> files);
+
+    // ========== Complete Contract ==========
+    
+    /**
+     * Đóng hợp đồng (hoàn thành thanh toán)
+     */
+    Boolean completeContract(@Valid ContractCompleteDTO completeDTO);
+
+    // ========== PDF Generation ==========
+    
+    /**
+     * Tải xuống file PDF hợp đồng
+     */
+    byte[] downloadContractPDF(String id);
+}

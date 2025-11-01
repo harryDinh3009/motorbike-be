@@ -6,97 +6,112 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
+/**
+ * DTO hiển thị thông tin hợp đồng (đã nâng cấp)
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 public class ContractDTO {
-
-    /** Constructor cho native query - 18 parameters (không bao gồm statusNm và surcharges) */
-    public ContractDTO(Long rowNum, String id, String carId, String carName, String licensePlate,
-                       String customerId, String customerName, String phoneNumber,
-                       Long startDate, Long endDate, Integer rentalDays,
-                       BigDecimal dailyPrice, BigDecimal totalAmount, BigDecimal surchargeAmount,
-                       BigDecimal finalAmount, String status, String notes, Long actualEndDate) {
-        this.rowNum = rowNum != null ? rowNum.intValue() : null;
+    // Basic Info
+    private String id;
+    private String contractCode;
+    private String customerId;
+    private String customerName;
+    private String phoneNumber;
+    private String email;
+    private String country;
+    private String citizenId;
+    private Integer totalContracts; // Số hợp đồng thuê
+    
+    // Contract Info
+    private String source; // Nguồn
+    private Date startDate;
+    private Date endDate;
+    private String pickupBranchId;
+    private String pickupBranchName;
+    private String returnBranchId;
+    private String returnBranchName;
+    private String pickupAddress;
+    private String returnAddress;
+    private Boolean needPickupDelivery;
+    private Boolean needReturnDelivery;
+    private String notes;
+    
+    // Financial Info
+    private BigDecimal totalRentalAmount;
+    private BigDecimal totalSurcharge;
+    private String discountType;
+    private BigDecimal discountValue;
+    private BigDecimal discountAmount;
+    private BigDecimal depositAmount;
+    private BigDecimal finalAmount;
+    private BigDecimal paidAmount;
+    private BigDecimal remainingAmount;
+    
+    // Status
+    private ContractStatus status;
+    private String statusNm; // Tên trạng thái để hiển thị
+    
+    // Delivery & Return Info
+    private String deliveryEmployeeId;
+    private String deliveryEmployeeName;
+    private Date deliveryTime;
+    private String returnEmployeeId;
+    private String returnEmployeeName;
+    private Date returnTime;
+    private Date completedDate;
+    
+    // Relationships (load khi cần)
+    private List<ContractCarDTO> cars; // Danh sách xe
+    private List<SurchargeDTO> surcharges; // Danh sách phụ thu
+    private List<PaymentTransactionDTO> payments; // Lịch sử thanh toán
+    private List<ContractImageDTO> deliveryImages; // Ảnh giao xe
+    private List<ContractImageDTO> returnImages; // Ảnh nhận xe
+    
+    /**
+     * Constructor for native query projection (26 parameters)
+     * Must match the SELECT columns in ContractRepository.searchContracts()
+     */
+    public ContractDTO(String id, String contractCode, String customerId, String customerName,
+                       String phoneNumber, String email, String source, Date startDate, Date endDate,
+                       String pickupBranchId, String pickupBranchName, String returnBranchId,
+                       String returnBranchName, String pickupAddress, String returnAddress,
+                       BigDecimal totalRentalAmount, BigDecimal totalSurcharge, BigDecimal discountAmount,
+                       BigDecimal finalAmount, BigDecimal paidAmount, BigDecimal remainingAmount,
+                       String status, String notes, Date deliveryTime, Date returnTime, Date completedDate) {
         this.id = id;
-        this.carId = carId;
-        this.carName = carName;
-        this.licensePlate = licensePlate;
+        this.contractCode = contractCode;
         this.customerId = customerId;
         this.customerName = customerName;
         this.phoneNumber = phoneNumber;
+        this.email = email;
+        this.source = source;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.rentalDays = rentalDays;
-        this.dailyPrice = dailyPrice;
-        this.totalAmount = totalAmount;
-        this.surchargeAmount = surchargeAmount;
+        this.pickupBranchId = pickupBranchId;
+        this.pickupBranchName = pickupBranchName;
+        this.returnBranchId = returnBranchId;
+        this.returnBranchName = returnBranchName;
+        this.pickupAddress = pickupAddress;
+        this.returnAddress = returnAddress;
+        this.totalRentalAmount = totalRentalAmount;
+        this.totalSurcharge = totalSurcharge;
+        this.discountAmount = discountAmount;
         this.finalAmount = finalAmount;
-        this.status = ContractStatus.valueOf(status);
+        this.paidAmount = paidAmount;
+        this.remainingAmount = remainingAmount;
+        // Convert String status to enum
+        if (status != null && !status.isEmpty()) {
+            this.status = ContractStatus.valueOf(status);
+            this.statusNm = this.status.getDescription();
+        }
         this.notes = notes;
-        this.actualEndDate = actualEndDate;
+        this.deliveryTime = deliveryTime;
+        this.returnTime = returnTime;
+        this.completedDate = completedDate;
     }
-
-    /** Số thứ tự hiển thị */
-    private Integer rowNum;
-
-    /** ID hợp đồng */
-    private String id;
-
-    /** ID xe */
-    private String carId;
-
-    /** Tên xe */
-    private String carName;
-
-    /** Biển số xe */
-    private String licensePlate;
-
-    /** ID khách hàng */
-    private String customerId;
-
-    /** Tên khách hàng */
-    private String customerName;
-
-    /** Số điện thoại khách hàng */
-    private String phoneNumber;
-
-    /** Ngày bắt đầu thuê */
-    private Long startDate;
-
-    /** Ngày kết thúc thuê dự kiến */
-    private Long endDate;
-
-    /** Số ngày thuê */
-    private Integer rentalDays;
-
-    /** Giá thuê theo ngày */
-    private BigDecimal dailyPrice;
-
-    /** Tổng tiền thuê (chưa bao gồm phụ phí) */
-    private BigDecimal totalAmount;
-
-    /** Tổng phụ phí */
-    private BigDecimal surchargeAmount;
-
-    /** Tổng tiền cuối cùng */
-    private BigDecimal finalAmount;
-
-    /** Trạng thái hợp đồng */
-    private ContractStatus status;
-
-    /** Tên trạng thái hiển thị */
-    private String statusNm;
-
-    /** Ghi chú */
-    private String notes;
-
-    /** Ngày trả xe thực tế */
-    private Long actualEndDate;
-
-    /** Danh sách phụ phí của hợp đồng */
-    private List<SurchargeDTO> surcharges;
 }
-

@@ -7,25 +7,21 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO để lưu xe trong hợp đồng
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SurchargeDTO {
-
-    /** ID phụ phí */
+public class ContractCarSaveDTO {
     private String id;
-
-    /** ID hợp đồng */
-    private String contractId;
-
-    /** Mô tả phụ phí */
-    private String description;
-
-    /** Số tiền phụ phí */
-    private BigDecimal amount;
-
-    /** Ghi chú */
+    private String carId;
+    private BigDecimal dailyPrice;
+    private BigDecimal hourlyPrice;
+    private BigDecimal totalAmount;
+    private Integer startOdometer;
+    private Integer endOdometer;
     private String notes;
 }
 

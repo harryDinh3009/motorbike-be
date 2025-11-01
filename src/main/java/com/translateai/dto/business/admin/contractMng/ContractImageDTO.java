@@ -5,27 +5,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-
+/**
+ * DTO hiển thị ảnh xe trong hợp đồng
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SurchargeDTO {
-
-    /** ID phụ phí */
+public class ContractImageDTO {
     private String id;
-
-    /** ID hợp đồng */
     private String contractId;
-
-    /** Mô tả phụ phí */
-    private String description;
-
-    /** Số tiền phụ phí */
-    private BigDecimal amount;
-
-    /** Ghi chú */
+    private String imageType; // DELIVERY / RETURN
+    private String imageUrl;
+    private Integer displayOrder;
     private String notes;
 }
 

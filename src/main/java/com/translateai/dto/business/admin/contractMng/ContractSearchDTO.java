@@ -2,26 +2,29 @@ package com.translateai.dto.business.admin.contractMng;
 
 import com.translateai.constant.enumconstant.ContractStatus;
 import com.translateai.dto.common.PageableDTO;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
+
+/**
+ * DTO tìm kiếm hợp đồng
+ */
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ContractSearchDTO extends PageableDTO {
-
-    /** ID khách hàng (lọc theo khách hàng) */
-    private String customerId;
-
-    /** ID xe (lọc theo xe) */
-    private String carId;
-
-    /** Trạng thái hợp đồng (lọc theo trạng thái) */
+    // Tìm theo tên khách, SDT, số hợp đồng, biển số xe
+    private String keyword;
+    
+    // Filter
+    private Date startDateFrom;
+    private Date startDateTo;
+    private String pickupBranchId;
+    private String returnBranchId;
     private ContractStatus status;
-
-    /** Ngày bắt đầu từ (lọc theo khoảng thời gian) */
-    private Long startDateFrom;
-
-    /** Ngày bắt đầu đến (lọc theo khoảng thời gian) */
-    private Long startDateTo;
+    private String source;
 }
-
