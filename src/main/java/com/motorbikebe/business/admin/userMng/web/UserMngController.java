@@ -8,12 +8,9 @@ import com.motorbikebe.dto.business.admin.userMng.UserMngListDTO;
 import com.motorbikebe.dto.business.admin.userMng.UserMngSaveDTO;
 import com.motorbikebe.dto.business.admin.userMng.UserMngSearchDTO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/a/user-mng")
@@ -28,8 +25,8 @@ public class UserMngController {
      * @param userMngSearchDTO .
      * @return PageableObject<UserMngListDTO>
      */
-    @GetMapping("/list")
-    public ApiResponse<PageableObject<UserMngListDTO>> getPageUser(UserMngSearchDTO userMngSearchDTO) {
+    @PostMapping("/list")
+    public ApiResponse<PageableObject<UserMngListDTO>> getPageUser(@RequestBody UserMngSearchDTO userMngSearchDTO) {
         PageableObject<UserMngListDTO> pageableRes = userMngService.getPageUser(userMngSearchDTO);
 
         return new ApiResponse<>(ApiStatus.SUCCESS, pageableRes);
@@ -58,7 +55,45 @@ public class UserMngController {
     public ApiResponse<UserMngSaveDTO> detailUser(@RequestParam("id") String id) {
         UserMngSaveDTO response = userMngService.detailUser(id);
 
-        return new ApiResponse<>(ApiStatus.CREATED, response);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Delete User
+     *
+     * @param id .
+     * @return Boolean
+     */
+    @DeleteMapping("/delete")
+    public ApiResponse<Boolean> deleteUser(@RequestParam("id") String id) {
+        Boolean response = userMngService.deleteUser(id);
+
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Get Users by Branch
+     *
+     * @param branchId .
+     * @return List<UserMngListDTO>
+     */
+    @GetMapping("/by-branch")
+    public ApiResponse<List<UserMngListDTO>> getUsersByBranch(@RequestParam("branchId") String branchId) {
+        List<UserMngListDTO> response = userMngService.getUsersByBranch(branchId);
+
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Get All Active Users
+     *
+     * @return List<UserMngListDTO>
+     */
+    @GetMapping("/all-active")
+    public ApiResponse<List<UserMngListDTO>> getAllActiveUsers() {
+        List<UserMngListDTO> response = userMngService.getAllActiveUsers();
+
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }
 
 }

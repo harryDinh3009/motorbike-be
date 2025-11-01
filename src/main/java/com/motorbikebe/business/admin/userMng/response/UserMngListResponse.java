@@ -18,6 +18,10 @@ public interface UserMngListResponse {
     String getRoleNm();
 
     String getPhoneNumber();
+    
+    String getBranchId();
+    
+    String getBranchName();
 
     String getStatusNm();
 

@@ -8,16 +8,16 @@ import lombok.Setter;
 @Setter
 public class UserMngSearchDTO extends PageableDTO {
 
-    private String fullName;
+    /** Tìm kiếm theo tên, email, hoặc số điện thoại */
+    private String keyword;
 
-    private String email;
-
+    /** Lọc theo vai trò (role code) */
     private String role;
 
-    private String gender;
-
-    private String phoneNumber;
-
+    /** Lọc theo trạng thái */
     private String status;
+    
+    /** Lọc theo chi nhánh */
+    private String branchId;
 
 }

@@ -14,6 +14,8 @@ public class UserMngSaveDTO {
     private String fullName;
 
     private String email;
+    
+    private String password; // For creating new user
 
     private String roleCd;
 
@@ -22,6 +24,10 @@ public class UserMngSaveDTO {
     private String phoneNumber;
 
     private String dateOfBirth;
+    
+    private String address;
+    
+    private String branchId;
 
     private String statusCd;
 

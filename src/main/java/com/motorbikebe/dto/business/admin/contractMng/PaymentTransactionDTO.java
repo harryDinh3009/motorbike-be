@@ -22,8 +22,8 @@ public class PaymentTransactionDTO {
     private String paymentMethod; // Phương thức
     private BigDecimal amount; // Số tiền
     private Date paymentDate; // Ngày thanh toán
-    private String employeeId;
-    private String employeeName; // Nhân viên (join)
+    private String userId;
+    private String userName; // User (join)
     private String notes; // Ghi chú
     private String status;
 }

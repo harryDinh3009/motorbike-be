@@ -63,12 +63,8 @@ public class UserMngServiceImpl implements UserMngService {
      */
     @Override
     public PageableObject<UserMngListDTO> getPageUser(UserMngSearchDTO userMngSearchDTO) {
-        List<String> listCdMentorMentee = new ArrayList<>();
-        listCdMentorMentee.add(Constants.CD_ROLE_MENTOR);
-        listCdMentorMentee.add(Constants.CD_ROLE_CLIENT);
-
         Pageable pageable = PageRequest.of(userMngSearchDTO.getPage() - 1, userMngSearchDTO.getSize());
-        Page<UserMngListResponse> pageResponse = userRepository.getPageUserMng(pageable, userMngSearchDTO, listCdMentorMentee);
+        Page<UserMngListResponse> pageResponse = userRepository.getPageUserMng(pageable, userMngSearchDTO);
 
         Page<UserMngListDTO> dtoPage = pageResponse.map(
                 response -> modelMapper.map(response, UserMngListDTO.class)
@@ -123,6 +119,8 @@ public class UserMngServiceImpl implements UserMngService {
         userEntity.setGender(userMngSaveDTO.getGenderCd());
         userEntity.setDateOfBirth(Utils.convertStringToDate(userMngSaveDTO.getDateOfBirth(), "yyyy-MM-dd"));
         userEntity.setPhoneNumber(userMngSaveDTO.getPhoneNumber());
+        userEntity.setAddress(userMngSaveDTO.getAddress());
+        userEntity.setBranchId(userMngSaveDTO.getBranchId());
         userEntity.setStatus(userMngSaveDTO.getStatusCd());
         userEntity.setAvatar(ScreenConstants.URL_AVATAR_DEFAULT);
 
@@ -137,9 +135,21 @@ public class UserMngServiceImpl implements UserMngService {
 
         if (isNew) {
             RoleEntity roleEntity = roleRepository.findByRlCd(userMngSaveDTO.getRoleCd());
+            
+            // Auto-create role if not exists (for ADMIN role)
+            if (Objects.isNull(roleEntity) && "ADMIN".equals(userMngSaveDTO.getRoleCd())) {
+                roleEntity = new RoleEntity();
+                roleEntity.setRlCd("ADMIN");
+                roleEntity.setRlNm("Administrator");
+                roleEntity.setRlDesc("System Administrator with full access");
+                roleEntity.setCategory("SYSTEM");
+                roleEntity = roleRepository.save(roleEntity);
+            }
+            
             if (Objects.isNull(roleEntity)) {
                 throw new RestApiException(ApiStatus.NOT_FOUND);
             }
+            
             UserRoleEntity userRoleEntity = new UserRoleEntity();
             userRoleEntity.setUserId(savedUser.getId());
             userRoleEntity.setRlId(roleEntity.getRlId());
@@ -171,6 +181,8 @@ public class UserMngServiceImpl implements UserMngService {
         userMngSaveDTO.setGenderCd(userEntityFind.get().getGender());
         userMngSaveDTO.setDateOfBirth(Utils.convertDateToString(userEntityFind.get().getDateOfBirth(), "yyyy-MM-dd"));
         userMngSaveDTO.setPhoneNumber(userEntityFind.get().getPhoneNumber());
+        userMngSaveDTO.setAddress(userEntityFind.get().getAddress());
+        userMngSaveDTO.setBranchId(userEntityFind.get().getBranchId());
         userMngSaveDTO.setStatusCd(userEntityFind.get().getStatus());
 
         UserRoleEntity userRoleEntity = userRoleRepository.findByUserId(userEntityFind.get().getId());
@@ -186,6 +198,85 @@ public class UserMngServiceImpl implements UserMngService {
         userMngSaveDTO.setRoleCd(roleEntityFind.get().getRlCd());
 
         return userMngSaveDTO;
+    }
+
+    /**
+     * Delete User
+     *
+     * @param id .
+     * @return Boolean
+     */
+    @Override
+    @Transactional
+    public Boolean deleteUser(String id) {
+        Optional<UserEntity> userEntityFind = userRepository.findById(id);
+        if (!userEntityFind.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+        
+        // Delete user role first
+        UserRoleEntity userRoleEntity = userRoleRepository.findByUserId(id);
+        if (Objects.nonNull(userRoleEntity)) {
+            userRoleRepository.delete(userRoleEntity);
+        }
+        
+        // Delete user
+        userRepository.delete(userEntityFind.get());
+        
+        return true;
+    }
+
+    /**
+     * Get Users by Branch
+     *
+     * @param branchId .
+     * @return List<UserMngListDTO>
+     */
+    @Override
+    public List<UserMngListDTO> getUsersByBranch(String branchId) {
+        List<UserEntity> users = userRepository.findByBranchId(branchId);
+        
+        List<UserMngListDTO> result = new ArrayList<>();
+        for (UserEntity user : users) {
+            UserMngListDTO dto = new UserMngListDTO();
+            dto.setId(user.getId());
+            dto.setUserName(user.getUserName());
+            dto.setFullName(user.getFullName());
+            dto.setEmail(user.getEmail());
+            dto.setPhoneNumber(user.getPhoneNumber());
+            dto.setAddress(user.getAddress());
+            dto.setBranchId(user.getBranchId());
+            dto.setAvatar(user.getAvatar());
+            result.add(dto);
+        }
+        
+        return result;
+    }
+
+    /**
+     * Get All Active Users
+     *
+     * @return List<UserMngListDTO>
+     */
+    @Override
+    public List<UserMngListDTO> getAllActiveUsers() {
+        List<UserEntity> users = userRepository.findByStatus("ACTIVE");
+        
+        List<UserMngListDTO> result = new ArrayList<>();
+        for (UserEntity user : users) {
+            UserMngListDTO dto = new UserMngListDTO();
+            dto.setId(user.getId());
+            dto.setUserName(user.getUserName());
+            dto.setFullName(user.getFullName());
+            dto.setEmail(user.getEmail());
+            dto.setPhoneNumber(user.getPhoneNumber());
+            dto.setAddress(user.getAddress());
+            dto.setBranchId(user.getBranchId());
+            dto.setAvatar(user.getAvatar());
+            result.add(dto);
+        }
+        
+        return result;
     }
 
 }

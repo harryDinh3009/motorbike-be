@@ -57,11 +57,11 @@ public class ContractDTO {
     private String statusNm; // Tên trạng thái để hiển thị
     
     // Delivery & Return Info
-    private String deliveryEmployeeId;
-    private String deliveryEmployeeName;
+    private String deliveryUserId;
+    private String deliveryUserName;
     private Date deliveryTime;
-    private String returnEmployeeId;
-    private String returnEmployeeName;
+    private String returnUserId;
+    private String returnUserName;
     private Date returnTime;
     private Date completedDate;
     

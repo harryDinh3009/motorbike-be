@@ -67,6 +67,15 @@ public class UserEntity extends PrimaryEntity {
     /** Số điện thoại */
     @Column (length = EntityProperties.LENGTH_PHONE)
     String phoneNumber;
+    
+    /** Địa chỉ */
+    @Column (length = 500)
+    @Nationalized
+    String address;
+    
+    /** ID chi nhánh làm việc */
+    @Column (name = "branch_id", length = EntityProperties.LENGTH_ID)
+    String branchId;
 
     /** URL ảnh đại diện */
     @Column (length = EntityProperties.LENGTH_URL)

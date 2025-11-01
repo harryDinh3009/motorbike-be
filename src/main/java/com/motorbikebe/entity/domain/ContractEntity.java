@@ -114,17 +114,17 @@ public class ContractEntity extends PrimaryEntity {
     @Column(name = "status", nullable = false, length = 20)
     ContractStatus status;
 
-    /** Nhân viên giao xe */
-    @Column(name = "delivery_employee_id", length = 36)
-    String deliveryEmployeeId;
+    /** User giao xe */
+    @Column(name = "delivery_user_id", length = 36)
+    String deliveryUserId;
 
     /** Thời gian giao xe thực tế */
     @Column(name = "delivery_time")
     Date deliveryTime;
 
-    /** Nhân viên nhận xe */
-    @Column(name = "return_employee_id", length = 36)
-    String returnEmployeeId;
+    /** User nhận xe */
+    @Column(name = "return_user_id", length = 36)
+    String returnUserId;
 
     /** Thời gian nhận xe thực tế */
     @Column(name = "return_time")

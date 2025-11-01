@@ -32,7 +32,7 @@ public class PaymentTransactionSaveDTO {
     @NotNull(message = "Ngày thanh toán không được để trống")
     private Date paymentDate;
     
-    private String employeeId;
+    private String userId;
     private String notes;
 }
 

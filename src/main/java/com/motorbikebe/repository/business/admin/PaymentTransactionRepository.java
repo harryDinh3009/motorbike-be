@@ -14,7 +14,7 @@ import java.util.List;
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransactionEntity, String> {
 
     /**
-     * Lấy danh sách thanh toán theo hợp đồng (với thông tin nhân viên)
+     * Lấy danh sách thanh toán theo hợp đồng (với thông tin user)
      */
     @Query(value = """
             SELECT pt.id,
@@ -23,12 +23,12 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
                    pt.payment_method AS paymentMethod,
                    pt.amount,
                    pt.payment_date AS paymentDate,
-                   pt.employee_id AS employeeId,
-                   e.full_name AS employeeName,
+                   pt.user_id AS userId,
+                   u.full_name AS userName,
                    pt.notes,
                    pt.status
             FROM payment_transaction pt
-            LEFT JOIN employee e ON pt.employee_id = e.id
+            LEFT JOIN user u ON pt.user_id = u.id
             WHERE pt.contract_id = :contractId
             ORDER BY pt.payment_date DESC
             """, nativeQuery = true)

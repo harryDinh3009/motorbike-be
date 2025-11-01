@@ -30,8 +30,8 @@ public class ContractReturnDTO {
     private List<SurchargeSaveDTO> surcharges;
     
     // Thông tin nhận xe
-    @NotBlank(message = "Nhân viên nhận xe không được để trống")
-    private String returnEmployeeId;
+    @NotBlank(message = "User nhận xe không được để trống")
+    private String returnUserId;
     
     @NotNull(message = "Thời gian nhận xe không được để trống")
     private Date returnTime;

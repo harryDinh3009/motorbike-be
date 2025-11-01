@@ -49,7 +49,7 @@ public class ContractMngServiceImpl implements ContractMngService {
     private final CarRepository carRepository;
     private final CustomerRepository customerRepository;
     private final BranchRepository branchRepository;
-    private final EmployeeRepository employeeRepository;
+    private final UserRepository userRepository;
     private final SurchargeRepository surchargeRepository;
     private final CloudinaryUploadImages cloudinaryUploadImages;
     private final ModelMapper modelMapper;
@@ -113,14 +113,14 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .ifPresent(b -> contractDTO.setReturnBranchName(b.getName()));
         }
 
-        // Load employee info
-        if (StringUtils.isNotBlank(contract.getDeliveryEmployeeId())) {
-            employeeRepository.findById(contract.getDeliveryEmployeeId())
-                    .ifPresent(e -> contractDTO.setDeliveryEmployeeName(e.getFullName()));
+        // Load user info
+        if (StringUtils.isNotBlank(contract.getDeliveryUserId())) {
+            userRepository.findById(contract.getDeliveryUserId())
+                    .ifPresent(u -> contractDTO.setDeliveryUserName(u.getFullName()));
         }
-        if (StringUtils.isNotBlank(contract.getReturnEmployeeId())) {
-            employeeRepository.findById(contract.getReturnEmployeeId())
-                    .ifPresent(e -> contractDTO.setReturnEmployeeName(e.getFullName()));
+        if (StringUtils.isNotBlank(contract.getReturnUserId())) {
+            userRepository.findById(contract.getReturnUserId())
+                    .ifPresent(u -> contractDTO.setReturnUserName(u.getFullName()));
         }
 
         // Load cars
@@ -387,7 +387,7 @@ public class ContractMngServiceImpl implements ContractMngService {
         ContractEntity contract = contractOpt.get();
         
         // Update delivery info
-        contract.setDeliveryEmployeeId(deliveryDTO.getDeliveryEmployeeId());
+        contract.setDeliveryUserId(deliveryDTO.getDeliveryUserId());
         contract.setDeliveryTime(deliveryDTO.getDeliveryTime());
         contract.setStatus(ContractStatus.DELIVERED);
         
@@ -462,7 +462,7 @@ public class ContractMngServiceImpl implements ContractMngService {
         ContractEntity contract = contractOpt.get();
         
         // Update return info
-        contract.setReturnEmployeeId(returnDTO.getReturnEmployeeId());
+        contract.setReturnUserId(returnDTO.getReturnUserId());
         contract.setReturnTime(returnDTO.getReturnTime());
         contract.setStatus(ContractStatus.RETURNED);
         

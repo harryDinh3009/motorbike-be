@@ -43,9 +43,9 @@ public class PaymentTransactionEntity extends PrimaryEntity {
     @Column(name = "payment_date", nullable = false)
     Date paymentDate;
 
-    /** Nhân viên xử lý */
-    @Column(name = "employee_id", length = 36)
-    String employeeId;
+    /** User xử lý */
+    @Column(name = "user_id", length = 36)
+    String userId;
 
     /** Ghi chú */
     @Lob

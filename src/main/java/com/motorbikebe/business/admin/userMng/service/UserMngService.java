@@ -6,6 +6,8 @@ import com.motorbikebe.dto.business.admin.userMng.UserMngSaveDTO;
 import com.motorbikebe.dto.business.admin.userMng.UserMngSearchDTO;
 import jakarta.validation.Valid;
 
+import java.util.List;
+
 public interface UserMngService {
 
     /**
@@ -31,5 +33,28 @@ public interface UserMngService {
      * @return UserMngSaveDTO
      */
     UserMngSaveDTO detailUser(String id);
+    
+    /**
+     * Delete User
+     *
+     * @param id .
+     * @return Boolean
+     */
+    Boolean deleteUser(String id);
+    
+    /**
+     * Get Users by Branch
+     *
+     * @param branchId .
+     * @return List<UserMngListDTO>
+     */
+    List<UserMngListDTO> getUsersByBranch(String branchId);
+    
+    /**
+     * Get All Active Users
+     *
+     * @return List<UserMngListDTO>
+     */
+    List<UserMngListDTO> getAllActiveUsers();
 
 }
