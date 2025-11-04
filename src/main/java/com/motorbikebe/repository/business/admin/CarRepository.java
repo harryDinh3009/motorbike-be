@@ -49,7 +49,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
             AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
-            AND (:#{#req.status} IS NULL OR c.status = :#{#req.status})
+            AND (:#{#req.status?.name()} IS NULL OR c.status = :#{#req.status?.name()})
             ORDER BY c.created_date DESC
             """, countQuery = """
             SELECT COUNT(c.id)
@@ -61,7 +61,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
             AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
-            AND (:#{#req.status} IS NULL OR c.status = :#{#req.status})
+            AND (:#{#req.status?.name()} IS NULL OR c.status = :#{#req.status?.name()})
             """, nativeQuery = true)
     Page<CarDTO> searchCars(Pageable pageable, @Param("req") CarSearchDTO req);
 
