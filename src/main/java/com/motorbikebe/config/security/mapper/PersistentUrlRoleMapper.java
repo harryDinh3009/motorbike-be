@@ -51,6 +51,7 @@ public class PersistentUrlRoleMapper implements IUrlRoleMapper {
         // TODO Authorization
 //        urlRoleMappings.clear();
         urlRoleMappings.put("/**", "permitAll");
+//        urlRoleMappings.put("/**", "isAuthenticated()");
 
         return urlRoleMappings;
     }

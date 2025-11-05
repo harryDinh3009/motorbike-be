@@ -53,9 +53,13 @@ public final class Constants {
 
     public static final String CD_SCHOOL = "CD_SCHOOL";
 
-    public static final String CD_STATUS_01 = "STATUS_01";
+//    public static final String CD_STATUS_01 = "STATUS_01";
+//
+//    public static final String CD_STATUS_02 = "STATUS_02";
 
-    public static final String CD_STATUS_02 = "STATUS_02";
+        public static final String CD_STATUS_01 = "ACTIVE";
+
+    public static final String CD_STATUS_02 = "NOT_ACTIVE";
 
     public static final String CD_ROLE_MENTOR = "SYSMTOR";
 

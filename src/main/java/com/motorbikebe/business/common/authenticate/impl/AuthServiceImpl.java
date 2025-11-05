@@ -14,6 +14,7 @@ import com.motorbikebe.dto.common.authenticate.LoginFacebookDTO;
 import com.motorbikebe.dto.common.authenticate.LoginGoogleDTO;
 import com.motorbikebe.dto.common.authenticate.LoginRequestDTO;
 import com.motorbikebe.dto.common.authenticate.LoginResponseDTO;
+import com.motorbikebe.dto.common.authenticate.LogoutResponseDTO;
 import com.motorbikebe.entity.domain.UserEntity;
 import com.motorbikebe.entity.system.RoleEntity;
 import com.motorbikebe.repository.business.admin.UserRepository;
@@ -80,6 +81,7 @@ public class AuthServiceImpl implements AuthService {
             log.warn("[LoginBasic] No access permission for user: {}", loginRequest.getUsername());
             throw new RestApiException(ApiStatus.NO_ACCESS_PERMISSION);
         }
+        String a = passwordEncoder.encode(loginRequest.getPassword());
         if (!passwordEncoder.matches(loginRequest.getPassword(), userEntityFind.getPassword())) {
             log.warn("[LoginBasic] Invalid credentials for user: {}", loginRequest.getUsername());
             throw new RestApiException(ApiStatus.INVALID_CREDENTIALS);
@@ -222,6 +224,39 @@ public class AuthServiceImpl implements AuthService {
         response.setExpiresIn(jwtExpirationMs);
 
         log.info("[FacebookLogin] Success login for facebookId={}", facebookId);
+        return response;
+    }
+
+    @Override
+    public LogoutResponseDTO logout() {
+        log.info("[Logout] Start logout process");
+        
+        // Get current authenticated user from SecurityContext
+        org.springframework.security.core.Authentication authentication = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        
+        String username = null;
+        if (authentication != null && authentication.isAuthenticated() 
+                && !authentication.getPrincipal().equals(Constants.ANONYMOUS_USER)) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+                username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            } else {
+                username = principal.toString();
+            }
+            
+            // Clear the security context
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+            log.info("[Logout] Successfully logged out user: {}", username);
+        } else {
+            log.warn("[Logout] No authenticated user found in security context");
+            username = "Unknown";
+        }
+        
+        LogoutResponseDTO response = new LogoutResponseDTO();
+        response.setMessage("Logout successful");
+        response.setUsername(username);
+        
         return response;
     }
 

@@ -4,6 +4,7 @@ import com.motorbikebe.dto.common.authenticate.LoginFacebookDTO;
 import com.motorbikebe.dto.common.authenticate.LoginGoogleDTO;
 import com.motorbikebe.dto.common.authenticate.LoginRequestDTO;
 import com.motorbikebe.dto.common.authenticate.LoginResponseDTO;
+import com.motorbikebe.dto.common.authenticate.LogoutResponseDTO;
 import jakarta.validation.Valid;
 
 public interface AuthService {
@@ -39,5 +40,12 @@ public interface AuthService {
      * @return LoginResponseDTO
      */
     LoginResponseDTO loginFacebookClient(@Valid LoginFacebookDTO loginFacebookDTO);
+
+    /**
+     * Logout User
+     *
+     * @return LogoutResponseDTO
+     */
+    LogoutResponseDTO logout();
 
 }

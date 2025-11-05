@@ -101,6 +101,31 @@ public class SecurityConfig {
         return http.build();
     }
 
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(jwtTokenProvider, userDetailsService);
+//        http
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+//                .addFilterBefore(restAuthenticationFilter(http.getSharedObject(AuthenticationManager.class), http),
+//                        UsernamePasswordAuthenticationFilter.class)
+//
+//                // Dynamic Authorization - SỬ DỤNG authorizationManager
+//                .authorizeHttpRequests(authorize -> authorize
+//                        .anyRequest().access(authorizationManager)  // ← Thay đổi dòng này
+//                )
+//
+//                .sessionManagement(sessionManagement ->
+//                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+//                )
+//                .exceptionHandling(exception -> exception
+//                        .authenticationEntryPoint(new RestAuthenticationEntryPoint())
+//                        .accessDeniedHandler(new RestAccessDeniedHandler())
+//                );
+//
+//        return http.build();
+//    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

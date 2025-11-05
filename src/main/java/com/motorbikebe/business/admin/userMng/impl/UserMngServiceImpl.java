@@ -125,7 +125,8 @@ public class UserMngServiceImpl implements UserMngService {
         userEntity.setAvatar(ScreenConstants.URL_AVATAR_DEFAULT);
 
         if (isNew) {
-            String password = Utils.generateRandomPassword();
+//            String password = Utils.generateRandomPassword();
+            String password = userMngSaveDTO.getPassword();
             userEntity.setPassword(passwordEncoder.encode(password));
             String htmlBody = "<p>Mật khẩu của bạn là:</p><br/><div style=\"text-align: center; font-weight: bold; font-size: 25px;\"><strong>" + password + "</strong></div>";
             emailSender.sendEmail(new String[]{userMngSaveDTO.getEmail()}, "[MENTOR_MATCH] Thông báo mật khẩu", "Thông báo mật khẩu sau khi đăng ký tài khoản", htmlBody);
@@ -142,7 +143,7 @@ public class UserMngServiceImpl implements UserMngService {
                 roleEntity.setRlCd("ADMIN");
                 roleEntity.setRlNm("Administrator");
                 roleEntity.setRlDesc("System Administrator with full access");
-                roleEntity.setCategory("SYSTEM");
+                roleEntity.setCategory("SITE_01");
                 roleEntity = roleRepository.save(roleEntity);
             }
             

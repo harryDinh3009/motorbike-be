@@ -7,6 +7,7 @@ import com.motorbikebe.dto.common.authenticate.LoginFacebookDTO;
 import com.motorbikebe.dto.common.authenticate.LoginGoogleDTO;
 import com.motorbikebe.dto.common.authenticate.LoginRequestDTO;
 import com.motorbikebe.dto.common.authenticate.LoginResponseDTO;
+import com.motorbikebe.dto.common.authenticate.LogoutResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -73,6 +74,16 @@ public class AuthController {
     @GetMapping("/verify-token")
     public ApiResponse<Boolean> verifyToken() {
         return new ApiResponse<>(ApiStatus.SUCCESS, Boolean.TRUE);
+    }
+
+    /**
+     * Logout User
+     *
+     * @return ApiResponse<LogoutResponseDTO>
+     */
+    @PostMapping("/logout")
+    public ApiResponse<LogoutResponseDTO> logout() {
+        return new ApiResponse<>(ApiStatus.SUCCESS, authService.logout());
     }
 
 }
