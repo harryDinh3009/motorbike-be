@@ -59,11 +59,15 @@ public class ContractMngServiceImpl implements ContractMngService {
         Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
         Page<ContractDTO> contractPage = contractRepository.searchContracts(pageable, searchDTO);
 
-        // Set status description
+        // Set status description and load cars for each contract
         contractPage.forEach(contract -> {
             if (contract.getStatus() != null) {
                 contract.setStatusNm(contract.getStatus().getDescription());
             }
+            
+            // Load cars information for each contract
+            List<ContractCarDTO> cars = getContractCars(contract.getId());
+            contract.setCars(cars);
         });
 
         return PageableObject.<ContractDTO>builder()
