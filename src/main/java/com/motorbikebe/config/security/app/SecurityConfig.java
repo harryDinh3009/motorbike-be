@@ -54,77 +54,77 @@ public class SecurityConfig {
         this.authorizationManager = authorizationManager;
     }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(jwtTokenProvider, userDetailsService);
-        http
-                // .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Tắt CORS
-                .csrf(AbstractHttpConfigurer::disable)
-                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(restAuthenticationFilter(http.getSharedObject(AuthenticationManager.class), http),
-                        UsernamePasswordAuthenticationFilter.class)
-                // Static Authorization
-//                .authorizeHttpRequests(
-//                        authorize -> authorize
-//                        .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
-//                        // TODO Authentication, Authorization
-//                        .requestMatchers(new AntPathRequestMatcher("/api/**")).permitAll()
-//                        .anyRequest()
-//                        .authenticated()
-//                )
-                // Dynamic Authorization
-                .authorizeHttpRequests(authorize -> authorize
-                        //.requestMatchers("/api/**").permitAll()
-                        .anyRequest().permitAll()
-                )
-                .headers(headers -> headers
-                        .xssProtection(xss ->
-                                xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-                        .contentSecurityPolicy(cps ->
-                                cps.policyDirectives("script-src 'self'; object-src 'none'; base-uri 'none'"))
-                        .httpStrictTransportSecurity(hsts ->
-                                hsts.includeSubDomains(true).maxAgeInSeconds(31536000).preload(true))
-                        .addHeaderWriter(new StaticHeadersWriter("X-XSS-Protection", "1; mode=block"))
-                        .addHeaderWriter(new StaticHeadersWriter("X-Content-Type-Options", "nosniff"))
-                        .addHeaderWriter(new StaticHeadersWriter("Referrer-Policy", "no-referrer"))
-                        .addHeaderWriter(new StaticHeadersWriter("X-Permitted-Cross-Domain-Policies", "none"))
-                        .addHeaderWriter(new StaticHeadersWriter("X-Download-Options", "noopen"))
-                        .addHeaderWriter(new StaticHeadersWriter("X-Content-Security-Policy", "default-src 'self'"))
-                        .frameOptions().deny()
-                )
-                .sessionManagement(sessionManagement ->
-                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(new RestAuthenticationEntryPoint())
-                        .accessDeniedHandler(new RestAccessDeniedHandler()));
-
-        return http.build();
-    }
-
 //    @Bean
 //    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 //        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(jwtTokenProvider, userDetailsService);
 //        http
+//                // .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Tắt CORS
 //                .csrf(AbstractHttpConfigurer::disable)
 //                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
 //                .addFilterBefore(restAuthenticationFilter(http.getSharedObject(AuthenticationManager.class), http),
 //                        UsernamePasswordAuthenticationFilter.class)
-//
-//                // Dynamic Authorization - SỬ DỤNG authorizationManager
+//                // Static Authorization
+////                .authorizeHttpRequests(
+////                        authorize -> authorize
+////                        .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
+////                        // TODO Authentication, Authorization
+////                        .requestMatchers(new AntPathRequestMatcher("/api/**")).permitAll()
+////                        .anyRequest()
+////                        .authenticated()
+////                )
+//                // Dynamic Authorization
 //                .authorizeHttpRequests(authorize -> authorize
-//                        .anyRequest().access(authorizationManager)  // ← Thay đổi dòng này
+//                        //.requestMatchers("/api/**").permitAll()
+//                        .anyRequest().permitAll()
 //                )
-//
+//                .headers(headers -> headers
+//                        .xssProtection(xss ->
+//                                xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+//                        .contentSecurityPolicy(cps ->
+//                                cps.policyDirectives("script-src 'self'; object-src 'none'; base-uri 'none'"))
+//                        .httpStrictTransportSecurity(hsts ->
+//                                hsts.includeSubDomains(true).maxAgeInSeconds(31536000).preload(true))
+//                        .addHeaderWriter(new StaticHeadersWriter("X-XSS-Protection", "1; mode=block"))
+//                        .addHeaderWriter(new StaticHeadersWriter("X-Content-Type-Options", "nosniff"))
+//                        .addHeaderWriter(new StaticHeadersWriter("Referrer-Policy", "no-referrer"))
+//                        .addHeaderWriter(new StaticHeadersWriter("X-Permitted-Cross-Domain-Policies", "none"))
+//                        .addHeaderWriter(new StaticHeadersWriter("X-Download-Options", "noopen"))
+//                        .addHeaderWriter(new StaticHeadersWriter("X-Content-Security-Policy", "default-src 'self'"))
+//                        .frameOptions().deny()
+//                )
 //                .sessionManagement(sessionManagement ->
 //                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 //                )
-//                .exceptionHandling(exception -> exception
-//                        .authenticationEntryPoint(new RestAuthenticationEntryPoint())
-//                        .accessDeniedHandler(new RestAccessDeniedHandler())
-//                );
+//                .exceptionHandling(exception -> exception.authenticationEntryPoint(new RestAuthenticationEntryPoint())
+//                        .accessDeniedHandler(new RestAccessDeniedHandler()));
 //
 //        return http.build();
 //    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        JwtTokenFilter jwtTokenFilter = new JwtTokenFilter(jwtTokenProvider, userDetailsService);
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(restAuthenticationFilter(http.getSharedObject(AuthenticationManager.class), http),
+                        UsernamePasswordAuthenticationFilter.class)
+
+                // Dynamic Authorization - SỬ DỤNG authorizationManager
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().access(authorizationManager)  // ← Thay đổi dòng này
+                )
+
+                .sessionManagement(sessionManagement ->
+                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new RestAuthenticationEntryPoint())
+                        .accessDeniedHandler(new RestAccessDeniedHandler())
+                );
+
+        return http.build();
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
