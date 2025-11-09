@@ -58,5 +58,13 @@ public interface CarMngService {
      * @return URL ảnh
      */
     String uploadCarImage(String carId, MultipartFile file);
+
+    /**
+     * Tìm kiếm xe có sẵn chưa có trong hợp đồng nào với phân trang
+     *
+     * @param searchDTO DTO tìm kiếm
+     * @return PageableObject<CarDTO>
+     */
+    PageableObject<CarDTO> searchAvailableCars(CarSearchDTO searchDTO);
 }
 

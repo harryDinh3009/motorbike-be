@@ -70,5 +70,44 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
     List<CarEntity> findByStatus(CarStatus status);
     
     List<CarEntity> findByBranchId(String branchId);
+
+    @Query(value = """
+            SELECT c.id,
+                   c.model,
+                   c.license_plate AS licensePlate,
+                   c.car_type AS carType,
+                   c.branch_id AS branchId,
+                   b.name AS branchName,
+                   c.daily_price AS dailyPrice,
+                   c.hourly_price AS hourlyPrice,
+                   c.condition,
+                   c.current_odometer AS currentOdometer,
+                   c.status,
+                   c.image_url AS imageUrl,
+                   c.note,
+                   c.year_of_manufacture AS yearOfManufacture,
+                   c.origin,
+                   c.value,
+                   c.frame_number AS frameNumber,
+                   c.engine_number AS engineNumber,
+                   c.color,
+                   c.registration_number AS registrationNumber,
+                   c.registered_owner_name AS registeredOwnerName,
+                   c.registration_place AS registrationPlace,
+                   c.insurance_contract_number AS insuranceContractNumber,
+                   c.insurance_expiry_date AS insuranceExpiryDate
+            FROM car c
+            JOIN branch b ON c.branch_id = b.id
+            WHERE c.status = 'AVAILABLE'
+            AND c.id NOT IN (SELECT DISTINCT car_id FROM contract_car)
+            ORDER BY c.created_date DESC
+            """, countQuery = """
+            SELECT COUNT(c.id)
+            FROM car c
+            JOIN branch b ON c.branch_id = b.id
+            WHERE c.status = 'AVAILABLE'
+            AND c.id NOT IN (SELECT DISTINCT car_id FROM contract_car)
+            """, nativeQuery = true)
+    Page<CarDTO> searchAvailableCars(Pageable pageable, @Param("req") CarSearchDTO req);
 }
 

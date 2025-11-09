@@ -45,6 +45,18 @@ public class CarMngController {
     }
 
     /**
+     * Tìm kiếm xe có sẵn chưa có trong hợp đồng nào với phân trang
+     *
+     * @param searchDTO DTO tìm kiếm
+     * @return PageableObject<CarDTO>
+     */
+    @PostMapping("/list-available")
+    public ApiResponse<PageableObject<CarDTO>> searchAvailableCars(@RequestBody CarSearchDTO searchDTO) {
+        PageableObject<CarDTO> pageableRes = carMngService.searchAvailableCars(searchDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, pageableRes);
+    }
+
+    /**
      * Lấy chi tiết xe
      *
      * @param id ID xe

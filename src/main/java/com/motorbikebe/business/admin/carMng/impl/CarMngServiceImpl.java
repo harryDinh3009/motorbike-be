@@ -165,5 +165,20 @@ public class CarMngServiceImpl implements CarMngService {
 
         return imageUrl;
     }
+
+    @Override
+    public PageableObject<CarDTO> searchAvailableCars(CarSearchDTO searchDTO) {
+        Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
+        Page<CarDTO> carPage = carRepository.searchAvailableCars(pageable, searchDTO);
+
+        // Set status name
+        carPage.getContent().forEach(car -> {
+            if (car.getStatus() != null) {
+                car.setStatusNm(car.getStatus().getDescription());
+            }
+        });
+
+        return new PageableObject<>(carPage);
+    }
 }
 
