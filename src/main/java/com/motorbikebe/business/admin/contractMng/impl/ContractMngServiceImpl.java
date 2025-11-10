@@ -168,7 +168,7 @@ public class ContractMngServiceImpl implements ContractMngService {
             String contractCode = contractRepository.generateContractCode();
             contractEntity.setContractCode(contractCode != null ? contractCode : "HD000001");
             
-            contractEntity.setStatus(saveDTO.getStatus() != null ? saveDTO.getStatus() : ContractStatus.DRAFT);
+            contractEntity.setStatus(saveDTO.getStatus() != null ? saveDTO.getStatus() : ContractStatus.CONFIRMED);
         } else {
             Optional<ContractEntity> existingContract = contractRepository.findById(saveDTO.getId());
             if (!existingContract.isPresent()) {
