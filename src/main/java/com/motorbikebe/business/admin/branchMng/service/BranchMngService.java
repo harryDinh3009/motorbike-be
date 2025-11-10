@@ -48,5 +48,12 @@ public interface BranchMngService {
      * @return List<BranchDTO>
      */
     List<BranchDTO> getAllActiveBranches();
+
+    /**
+     * Lấy chi nhánh của user đang đăng nhập
+     *
+     * @return BranchDTO
+     */
+    BranchDTO getBranchByCurrentUser();
 }
 

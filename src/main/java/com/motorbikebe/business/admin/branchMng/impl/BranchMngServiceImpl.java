@@ -1,12 +1,14 @@
 package com.motorbikebe.business.admin.branchMng.impl;
 
 import com.motorbikebe.business.admin.branchMng.service.BranchMngService;
+import com.motorbikebe.business.common.service.service.CommonService;
 import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.common.PageableObject;
 import com.motorbikebe.config.exception.RestApiException;
 import com.motorbikebe.dto.business.admin.branchMng.BranchDTO;
 import com.motorbikebe.dto.business.admin.branchMng.BranchSaveDTO;
 import com.motorbikebe.dto.business.admin.branchMng.BranchSearchDTO;
+import com.motorbikebe.dto.common.userCurrent.UserCurrentInfoDTO;
 import com.motorbikebe.entity.domain.BranchEntity;
 import com.motorbikebe.repository.business.admin.BranchRepository;
 import jakarta.validation.Valid;
@@ -31,6 +33,7 @@ public class BranchMngServiceImpl implements BranchMngService {
 
     private final BranchRepository branchRepository;
     private final ModelMapper modelMapper;
+    private final CommonService commonService;
 
     @Override
     public PageableObject<BranchDTO> searchBranches(BranchSearchDTO searchDTO) {
@@ -93,6 +96,29 @@ public class BranchMngServiceImpl implements BranchMngService {
         return branches.stream()
                 .map(branch -> modelMapper.map(branch, BranchDTO.class))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public BranchDTO getBranchByCurrentUser() {
+        // Lấy thông tin user hiện tại
+        UserCurrentInfoDTO userCurrentInfo = commonService.getUserCurrentInfo();
+        if (userCurrentInfo == null) {
+            throw new RestApiException(ApiStatus.UNAUTHORIZED);
+        }
+
+        // Lấy branchId từ user entity
+        String branchId = userCurrentInfo.getBranchId();
+        if (StringUtils.isBlank(branchId)) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+
+        // Lấy thông tin chi nhánh
+        Optional<BranchEntity> branchEntity = branchRepository.findById(branchId);
+        if (!branchEntity.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+
+        return modelMapper.map(branchEntity.get(), BranchDTO.class);
     }
 }
 

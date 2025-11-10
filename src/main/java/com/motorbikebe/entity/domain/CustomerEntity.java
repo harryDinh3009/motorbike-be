@@ -61,11 +61,13 @@ public class CustomerEntity extends PrimaryEntity {
     @Column(name = "citizen_id", length = 20)
     private String citizenId;
 
-    /** URL ảnh CCCD/CMND */
-    @Column(name = "citizen_id_image_url", length = EntityProperties.LENGTH_URL)
-    private String citizenIdImageUrl;
+    /** URL ảnh CCCD/CMND mặt trước */
+    @Column(name = "citizen_id_front_image_url", length = EntityProperties.LENGTH_URL)
+    private String citizenIdFrontImageUrl;
 
-    /** Số giấy phép lái xe */
+    /** URL ảnh CCCD/CMND mặt sau */
+    @Column(name = "citizen_id_back_image_url", length = EntityProperties.LENGTH_URL)
+    private String citizenIdBackImageUrl;
     @Column(name = "driver_license", length = 50)
     private String driverLicense;
 

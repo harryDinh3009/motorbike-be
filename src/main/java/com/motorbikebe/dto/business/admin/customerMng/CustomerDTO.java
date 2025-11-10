@@ -41,8 +41,11 @@ public class CustomerDTO {
     /** Số CCCD/CMND */
     private String citizenId;
 
-    /** URL ảnh CCCD/CMND */
-    private String citizenIdImageUrl;
+    /** URL ảnh CCCD/CMND mặt trước */
+    private String citizenIdFrontImageUrl;
+
+    /** URL ảnh CCCD/CMND mặt sau */
+    private String citizenIdBackImageUrl;
 
     /** Số giấy phép lái xe */
     private String driverLicense;

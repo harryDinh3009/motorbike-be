@@ -81,17 +81,32 @@ public class CustomerMngController {
     }
 
     /**
-     * Upload ảnh CCCD/CMND cho khách hàng
+     * Upload ảnh CCCD/CMND mặt trước cho khách hàng
      *
      * @param customerId ID khách hàng
-     * @param file File ảnh CCCD
+     * @param file File ảnh CCCD mặt trước
      * @return URL ảnh đã upload
      */
-    @PostMapping(value = "/upload-citizen-id", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ApiResponse<String> uploadCitizenIdImage(
+    @PostMapping(value = "/upload-citizen-id-front", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ApiResponse<String> uploadCitizenIdFrontImage(
             @RequestParam("customerId") String customerId,
             @RequestParam("file") MultipartFile file) {
-        String imageUrl = customerMngService.uploadCitizenIdImage(customerId, file);
+        String imageUrl = customerMngService.uploadCitizenIdFrontImage(customerId, file);
+        return new ApiResponse<>(ApiStatus.SUCCESS, imageUrl);
+    }
+
+    /**
+     * Upload ảnh CCCD/CMND mặt sau cho khách hàng
+     *
+     * @param customerId ID khách hàng
+     * @param file File ảnh CCCD mặt sau
+     * @return URL ảnh đã upload
+     */
+    @PostMapping(value = "/upload-citizen-id-back", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ApiResponse<String> uploadCitizenIdBackImage(
+            @RequestParam("customerId") String customerId,
+            @RequestParam("file") MultipartFile file) {
+        String imageUrl = customerMngService.uploadCitizenIdBackImage(customerId, file);
         return new ApiResponse<>(ApiStatus.SUCCESS, imageUrl);
     }
 

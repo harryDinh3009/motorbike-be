@@ -51,13 +51,22 @@ public interface CustomerMngService {
     List<CustomerDTO> getAllCustomers();
 
     /**
-     * Upload ảnh CCCD cho khách hàng
+     * Upload ảnh CCCD mặt trước cho khách hàng
      *
      * @param customerId ID khách hàng
-     * @param file File ảnh CCCD
+     * @param file File ảnh CCCD mặt trước
      * @return URL ảnh đã upload
      */
-    String uploadCitizenIdImage(String customerId, MultipartFile file);
+    String uploadCitizenIdFrontImage(String customerId, MultipartFile file);
+
+    /**
+     * Upload ảnh CCCD mặt sau cho khách hàng
+     *
+     * @param customerId ID khách hàng
+     * @param file File ảnh CCCD mặt sau
+     * @return URL ảnh đã upload
+     */
+    String uploadCitizenIdBackImage(String customerId, MultipartFile file);
 
     /**
      * Upload ảnh bằng lái xe cho khách hàng

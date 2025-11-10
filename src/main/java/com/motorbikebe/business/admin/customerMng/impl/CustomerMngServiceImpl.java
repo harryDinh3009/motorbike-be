@@ -78,7 +78,8 @@ public class CustomerMngServiceImpl implements CustomerMngService {
         customerEntity.setCountry(saveDTO.getCountry());
         customerEntity.setAddress(saveDTO.getAddress());
         customerEntity.setCitizenId(saveDTO.getCitizenId());
-        customerEntity.setCitizenIdImageUrl(saveDTO.getCitizenIdImageUrl());
+        customerEntity.setCitizenIdFrontImageUrl(saveDTO.getCitizenIdFrontImageUrl());
+        customerEntity.setCitizenIdBackImageUrl(saveDTO.getCitizenIdBackImageUrl());
         customerEntity.setDriverLicense(saveDTO.getDriverLicense());
         customerEntity.setDriverLicenseImageUrl(saveDTO.getDriverLicenseImageUrl());
         customerEntity.setPassport(saveDTO.getPassport());
@@ -111,16 +112,33 @@ public class CustomerMngServiceImpl implements CustomerMngService {
 
     @Override
     @Transactional
-    public String uploadCitizenIdImage(String customerId, MultipartFile file) {
+    public String uploadCitizenIdFrontImage(String customerId, MultipartFile file) {
         Optional<CustomerEntity> customerEntity = customerRepository.findById(customerId);
         if (!customerEntity.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
 
-        String imageUrl = cloudinaryUploadImages.uploadImage(file, "customer/citizen_id");
-        
+        String imageUrl = cloudinaryUploadImages.uploadImage(file, "customer/citizen_id_front");
+
         CustomerEntity customer = customerEntity.get();
-        customer.setCitizenIdImageUrl(imageUrl);
+        customer.setCitizenIdFrontImageUrl(imageUrl);
+        customerRepository.save(customer);
+
+        return imageUrl;
+    }
+
+    @Override
+    @Transactional
+    public String uploadCitizenIdBackImage(String customerId, MultipartFile file) {
+        Optional<CustomerEntity> customerEntity = customerRepository.findById(customerId);
+        if (!customerEntity.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+
+        String imageUrl = cloudinaryUploadImages.uploadImage(file, "customer/citizen_id_back");
+
+        CustomerEntity customer = customerEntity.get();
+        customer.setCitizenIdBackImageUrl(imageUrl);
         customerRepository.save(customer);
 
         return imageUrl;

@@ -28,6 +28,8 @@ public class UserCurrentInfoDTO {
 
     private String phoneNumber;
 
+    private String branchId;
+
     private String avatar;
 
     private String description;

@@ -77,5 +77,16 @@ public class BranchMngController {
         List<BranchDTO> response = branchMngService.getAllActiveBranches();
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }
+
+    /**
+     * Lấy chi nhánh của user đang đăng nhập
+     *
+     * @return BranchDTO
+     */
+    @GetMapping("/current-user")
+    public ApiResponse<BranchDTO> getBranchByCurrentUser() {
+        BranchDTO response = branchMngService.getBranchByCurrentUser();
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
 }
 
