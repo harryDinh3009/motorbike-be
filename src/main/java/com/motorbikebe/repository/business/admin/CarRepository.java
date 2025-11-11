@@ -82,7 +82,25 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.hourly_price AS hourlyPrice,
                    c.condition,
                    c.current_odometer AS currentOdometer,
-                   c.status,
+                   CASE
+                       WHEN :#{#req.startDate} IS NOT NULL 
+                            AND :#{#req.endDate} IS NOT NULL
+                            AND EXISTS (
+                                SELECT 1 
+                                FROM contract_car cc
+                                INNER JOIN contract con ON cc.contract_id = con.id
+                                WHERE cc.car_id = c.id
+                                AND con.status IN ('CONFIRMED', 'DELIVERED', 'RETURNED')
+                                AND (
+                                    (:#{#req.startDate} BETWEEN con.start_date AND con.end_date)
+                                    OR (:#{#req.endDate} BETWEEN con.start_date AND con.end_date)
+                                    OR (con.start_date BETWEEN :#{#req.startDate} AND :#{#req.endDate})
+                                    OR (con.end_date BETWEEN :#{#req.startDate} AND :#{#req.endDate})
+                                )
+                            )
+                       THEN 'NOT_AVAILABLE'
+                       ELSE c.status
+                   END AS status,
                    c.image_url AS imageUrl,
                    c.note,
                    c.year_of_manufacture AS yearOfManufacture,
@@ -97,16 +115,24 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.insurance_contract_number AS insuranceContractNumber,
                    c.insurance_expiry_date AS insuranceExpiryDate
             FROM car c
-            JOIN branch b ON c.branch_id = b.id
-            WHERE c.status = 'AVAILABLE'
-            AND c.id NOT IN (SELECT DISTINCT car_id FROM contract_car)
+            LEFT JOIN branch b ON c.branch_id = b.id
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
+                   OR c.model LIKE %:#{#req.keyword}% 
+                   OR c.license_plate LIKE %:#{#req.keyword}%)
+            AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
+            AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
+            AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
             ORDER BY c.created_date DESC
             """, countQuery = """
             SELECT COUNT(c.id)
             FROM car c
-            JOIN branch b ON c.branch_id = b.id
-            WHERE c.status = 'AVAILABLE'
-            AND c.id NOT IN (SELECT DISTINCT car_id FROM contract_car)
+            LEFT JOIN branch b ON c.branch_id = b.id
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
+                   OR c.model LIKE %:#{#req.keyword}% 
+                   OR c.license_plate LIKE %:#{#req.keyword}%)
+            AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
+            AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
+            AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
             """, nativeQuery = true)
     Page<CarDTO> searchAvailableCars(Pageable pageable, @Param("req") CarSearchDTO req);
 }

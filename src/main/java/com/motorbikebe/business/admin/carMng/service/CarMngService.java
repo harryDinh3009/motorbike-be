@@ -60,9 +60,12 @@ public interface CarMngService {
     String uploadCarImage(String carId, MultipartFile file);
 
     /**
-     * Tìm kiếm xe có sẵn chưa có trong hợp đồng nào với phân trang
+     * Tìm kiếm xe có sẵn với phân trang
+     * Nếu truyền startDate và endDate: kiểm tra xe có trong hợp đồng nào có thời gian trùng lặp không
+     * - Nếu trùng: chuyển status về NOT_AVAILABLE
+     * - Nếu không trùng: giữ nguyên status của xe
      *
-     * @param searchDTO DTO tìm kiếm
+     * @param searchDTO DTO tìm kiếm (bao gồm startDate và endDate)
      * @return PageableObject<CarDTO>
      */
     PageableObject<CarDTO> searchAvailableCars(CarSearchDTO searchDTO);

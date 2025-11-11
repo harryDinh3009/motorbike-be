@@ -5,6 +5,8 @@ import com.motorbikebe.dto.common.PageableDTO;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 public class CarSearchDTO extends PageableDTO {
@@ -23,5 +25,11 @@ public class CarSearchDTO extends PageableDTO {
 
     /** Lọc theo trạng thái */
     private CarStatus status;
+
+    /** Ngày thuê (dùng cho API list-available) */
+    private Date startDate;
+
+    /** Ngày trả (dùng cho API list-available) */
+    private Date endDate;
 }
 
