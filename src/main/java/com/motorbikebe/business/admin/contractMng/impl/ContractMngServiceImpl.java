@@ -503,6 +503,11 @@ public class ContractMngServiceImpl implements ContractMngService {
                     contractCar.setEndOdometer(carDTO.getEndOdometer());
                     contractCarRepository.save(contractCar);
                 });
+
+                carRepository.findById(carDTO.getId()).ifPresent(car -> {
+                   car.setCurrentOdometer(carDTO.getEndOdometer());
+                   carRepository.save(car);
+                });
             }
         }
 
