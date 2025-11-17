@@ -611,6 +611,7 @@ public class ContractMngServiceImpl implements ContractMngService {
 
                 carRepository.findById(carDTO.getId()).ifPresent(car -> {
                    car.setCurrentOdometer(carDTO.getEndOdometer());
+                   car.setStatus(carDTO.getStatus());
                    carRepository.save(car);
                 });
             }

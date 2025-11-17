@@ -1,5 +1,6 @@
 package com.motorbikebe.dto.business.admin.contractMng;
 
+import com.motorbikebe.constant.enumconstant.CarStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,5 +24,6 @@ public class ContractCarSaveDTO {
     private Integer startOdometer;
     private Integer endOdometer;
     private String notes;
+    private CarStatus status;
 }
 
