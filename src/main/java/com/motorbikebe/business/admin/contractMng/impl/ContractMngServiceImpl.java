@@ -295,19 +295,102 @@ public class ContractMngServiceImpl implements ContractMngService {
     public List<ContractCarDTO> getContractCars(String contractId) {
         List<ContractCarEntity> contractCars = contractCarRepository.findByContractId(contractId);
 
-        return contractCars.stream().map(contractCar -> {
-            ContractCarDTO dto = modelMapper.map(contractCar, ContractCarDTO.class);
+        return contractCars.stream()
+                .map(this::buildContractCarDTO)
+                .collect(Collectors.toList());
+    }
 
-            // Load car info
-            carRepository.findById(contractCar.getCarId()).ifPresent(car -> {
-                dto.setCarModel(car.getModel());
-                dto.setCarType(car.getCarType());
-                dto.setLicensePlate(car.getLicensePlate());
-                dto.setStatus(car.getStatus().toString());
-            });
+    @Override
+    @Transactional
+    public ContractCarDTO addContractCar(@Valid ContractCarCreateDTO createDTO) {
+        ContractEntity contract = contractRepository.findById(createDTO.getContractId())
+                .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
 
-            return dto;
-        }).collect(Collectors.toList());
+        carRepository.findById(createDTO.getCarId())
+                .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
+
+        if (contractCarRepository.existsByContractIdAndCarId(createDTO.getContractId(), createDTO.getCarId())) {
+            throw new RestApiException(ApiStatus.BAD_REQUEST);
+        }
+
+        validateCarAvailabilityForContract(contract, createDTO.getCarId());
+
+        ContractCarEntity contractCar = ContractCarEntity.builder()
+                .contractId(createDTO.getContractId())
+                .carId(createDTO.getCarId())
+                .dailyPrice(createDTO.getDailyPrice())
+                .hourlyPrice(createDTO.getHourlyPrice())
+                .totalAmount(createDTO.getTotalAmount())
+                .startOdometer(createDTO.getStartOdometer())
+                .endOdometer(createDTO.getEndOdometer())
+                .notes(createDTO.getNotes())
+                .build();
+
+        ContractCarEntity saved = contractCarRepository.save(contractCar);
+
+        updateContractTotals(contract.getId());
+
+        return buildContractCarDTO(saved);
+    }
+
+    @Override
+    @Transactional
+    public ContractCarDTO updateContractCar(String contractCarId, @Valid ContractCarUpdateDTO updateDTO) {
+        ContractCarEntity contractCar = contractCarRepository.findById(contractCarId)
+                .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
+
+        ContractEntity contract = contractRepository.findById(contractCar.getContractId())
+                .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
+
+        if (StringUtils.isNotBlank(updateDTO.getCarId()) &&
+                !updateDTO.getCarId().equals(contractCar.getCarId())) {
+            carRepository.findById(updateDTO.getCarId())
+                    .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
+
+            if (contractCarRepository.existsByContractIdAndCarId(contractCar.getContractId(), updateDTO.getCarId())) {
+                throw new RestApiException(ApiStatus.BAD_REQUEST);
+            }
+
+            validateCarAvailabilityForContract(contract, updateDTO.getCarId());
+            contractCar.setCarId(updateDTO.getCarId());
+        }
+
+        if (updateDTO.getDailyPrice() != null) {
+            contractCar.setDailyPrice(updateDTO.getDailyPrice());
+        }
+        if (updateDTO.getHourlyPrice() != null) {
+            contractCar.setHourlyPrice(updateDTO.getHourlyPrice());
+        }
+        if (updateDTO.getTotalAmount() != null) {
+            contractCar.setTotalAmount(updateDTO.getTotalAmount());
+        }
+        if (updateDTO.getStartOdometer() != null) {
+            contractCar.setStartOdometer(updateDTO.getStartOdometer());
+        }
+        if (updateDTO.getEndOdometer() != null) {
+            contractCar.setEndOdometer(updateDTO.getEndOdometer());
+        }
+        if (updateDTO.getNotes() != null) {
+            contractCar.setNotes(updateDTO.getNotes());
+        }
+
+        ContractCarEntity saved = contractCarRepository.save(contractCar);
+
+        updateContractTotals(contract.getId());
+
+        return buildContractCarDTO(saved);
+    }
+
+    @Override
+    @Transactional
+    public Boolean deleteContractCar(String contractCarId) {
+        ContractCarEntity contractCar = contractCarRepository.findById(contractCarId)
+                .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
+
+        contractCarRepository.deleteById(contractCarId);
+
+        updateContractTotals(contractCar.getContractId());
+        return true;
     }
 
     // ========== Surcharges ==========
@@ -1064,24 +1147,70 @@ public class ContractMngServiceImpl implements ContractMngService {
 
         ContractEntity contract = contractOpt.get();
 
-        // Recalculate surcharge total
-        BigDecimal totalSurcharge = surchargeRepository.findByContractId(contractId).stream()
-                .map(s -> s.getAmount())
+        BigDecimal totalRentalAmount = contractCarRepository.findByContractId(contractId).stream()
+                .map(car -> car.getTotalAmount() != null ? car.getTotalAmount() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Recalculate surcharge total
+        BigDecimal totalSurcharge = surchargeRepository.findByContractId(contractId).stream()
+                .map(SurchargeDTO::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal discountAmount = calculateDiscountAmount(
+                totalRentalAmount,
+                contract.getDiscountType(),
+                contract.getDiscountValue());
+
         // Recalculate final amount
-        BigDecimal finalAmount = contract.getTotalRentalAmount()
+        BigDecimal finalAmount = totalRentalAmount
                 .add(totalSurcharge)
-                .subtract(contract.getDiscountAmount() != null ? contract.getDiscountAmount() : BigDecimal.ZERO);
+                .subtract(discountAmount);
 
         // Recalculate paid amount
         BigDecimal paidAmount = paymentTransactionRepository.sumAmountByContractId(contractId);
+        if (paidAmount == null) {
+            paidAmount = BigDecimal.ZERO;
+        }
 
+        contract.setTotalRentalAmount(totalRentalAmount);
         contract.setTotalSurcharge(totalSurcharge);
+        contract.setDiscountAmount(discountAmount);
         contract.setFinalAmount(finalAmount);
         contract.setPaidAmount(paidAmount);
         contract.setRemainingAmount(finalAmount.subtract(paidAmount));
 
         contractRepository.save(contract);
+    }
+
+    private ContractCarDTO buildContractCarDTO(ContractCarEntity contractCar) {
+        ContractCarDTO dto = modelMapper.map(contractCar, ContractCarDTO.class);
+
+        carRepository.findById(contractCar.getCarId()).ifPresent(car -> {
+            dto.setCarModel(car.getModel());
+            dto.setCarType(car.getCarType());
+            dto.setLicensePlate(car.getLicensePlate());
+            dto.setStatus(car.getStatus().toString());
+        });
+
+        return dto;
+    }
+
+    private void validateCarAvailabilityForContract(ContractEntity contract, String carId) {
+        ContractStatus status = contract.getStatus();
+        if (status == null || (status != ContractStatus.CONFIRMED && status != ContractStatus.DELIVERED)) {
+            return;
+        }
+
+        List<ContractEntity> overlappingContracts = contractRepository.findOverlappingContracts(
+                        carId,
+                        contract.getStartDate(),
+                        contract.getEndDate())
+                .stream()
+                .filter(c -> !c.getId().equals(contract.getId()))
+                .collect(Collectors.toList());
+
+        if (!overlappingContracts.isEmpty()) {
+            throw new RestApiException(ApiStatus.BAD_REQUEST);
+        }
     }
 }

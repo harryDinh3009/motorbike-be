@@ -40,6 +40,21 @@ public interface ContractMngService {
      */
     List<ContractCarDTO> getContractCars(String contractId);
 
+    /**
+     * Thêm xe mới vào hợp đồng hiện hữu
+     */
+    ContractCarDTO addContractCar(@Valid ContractCarCreateDTO createDTO);
+
+    /**
+     * Cập nhật thông tin xe trong hợp đồng
+     */
+    ContractCarDTO updateContractCar(String contractCarId, @Valid ContractCarUpdateDTO updateDTO);
+
+    /**
+     * Xóa xe khỏi hợp đồng
+     */
+    Boolean deleteContractCar(String contractCarId);
+
     // ========== Surcharges ==========
     
     /**

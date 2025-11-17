@@ -8,6 +8,7 @@ import com.motorbikebe.common.PageableObject;
 import com.motorbikebe.constant.enumconstant.ContractStatus;
 import com.motorbikebe.dto.business.admin.contractMng.*;
 import com.motorbikebe.entity.domain.ContractEntity;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -80,6 +81,34 @@ public class ContractMngController {
     @GetMapping("/cars/{contractId}")
     public ApiResponse<List<ContractCarDTO>> getContractCars(@PathVariable String contractId) {
         List<ContractCarDTO> response = contractMngService.getContractCars(contractId);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Thêm xe vào hợp đồng
+     */
+    @PostMapping("/cars")
+    public ApiResponse<ContractCarDTO> addContractCar(@Valid @RequestBody ContractCarCreateDTO createDTO) {
+        ContractCarDTO response = contractMngService.addContractCar(createDTO);
+        return new ApiResponse<>(ApiStatus.CREATED, response);
+    }
+
+    /**
+     * Cập nhật xe trong hợp đồng
+     */
+    @PutMapping("/cars/{id}")
+    public ApiResponse<ContractCarDTO> updateContractCar(@PathVariable String id,
+                                                         @Valid @RequestBody ContractCarUpdateDTO updateDTO) {
+        ContractCarDTO response = contractMngService.updateContractCar(id, updateDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Xóa xe khỏi hợp đồng
+     */
+    @DeleteMapping("/cars/{id}")
+    public ApiResponse<Boolean> deleteContractCar(@PathVariable String id) {
+        Boolean response = contractMngService.deleteContractCar(id);
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }
 
