@@ -408,6 +408,28 @@ public class ContractMngServiceImpl implements ContractMngService {
 
     @Override
     @Transactional
+    public Boolean updateSurcharge(String id, @Valid SurchargeSaveDTO saveDTO) {
+        SurchargeEntity surcharge = surchargeRepository.findById(id)
+                .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
+
+        if (StringUtils.isNotBlank(saveDTO.getDescription())) {
+            surcharge.setDescription(saveDTO.getDescription());
+        }
+        if (saveDTO.getAmount() != null) {
+            surcharge.setAmount(saveDTO.getAmount());
+        }
+        if (saveDTO.getNotes() != null) {
+            surcharge.setNotes(saveDTO.getNotes());
+        }
+
+        surchargeRepository.save(surcharge);
+
+        updateContractTotals(surcharge.getContractId());
+        return true;
+    }
+
+    @Override
+    @Transactional
     public Boolean deleteSurcharge(String id) {
         Optional<SurchargeEntity> surchargeOpt = surchargeRepository.findById(id);
         if (!surchargeOpt.isPresent()) {

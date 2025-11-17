@@ -124,6 +124,16 @@ public class ContractMngController {
     }
 
     /**
+     * Cập nhật phụ thu
+     */
+    @PutMapping("/surcharge/update/{id}")
+    public ApiResponse<Boolean> updateSurcharge(@PathVariable String id,
+                                                @RequestBody SurchargeSaveDTO saveDTO) {
+        Boolean response = contractMngService.updateSurcharge(id, saveDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
      * Xóa phụ thu
      */
     @DeleteMapping("/surcharge/delete/{id}")

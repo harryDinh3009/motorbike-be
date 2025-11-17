@@ -63,6 +63,11 @@ public interface ContractMngService {
     Boolean addSurcharge(@Valid SurchargeSaveDTO saveDTO);
 
     /**
+     * Cập nhật phụ thu hợp đồng
+     */
+    Boolean updateSurcharge(String id, @Valid SurchargeSaveDTO saveDTO);
+
+    /**
      * Xóa phụ thu
      */
     Boolean deleteSurcharge(String id);
