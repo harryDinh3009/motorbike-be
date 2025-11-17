@@ -671,13 +671,6 @@ public class ContractMngServiceImpl implements ContractMngService {
                 throw new RestApiException(ApiStatus.NOT_FOUND);
             }
 
-            // Lấy danh sách xe trong hợp đồng
-            List<ContractCarDTO> cars = getContractCars(id);
-
-            if (cars == null || cars.isEmpty()) {
-                throw new RestApiException(ApiStatus.BAD_REQUEST_VALID);
-            }
-
             // Tạo PDF
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             com.itextpdf.kernel.pdf.PdfWriter writer = new com.itextpdf.kernel.pdf.PdfWriter(baos);
@@ -741,9 +734,12 @@ public class ContractMngServiceImpl implements ContractMngService {
             // ========== MỞ ĐẦU ==========
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
             String todayStr = dateFormat.format(new Date());
+            String contractDateStr = contract.getCreatedDate() != null ?
+                    dateFormat.format(contract.getCreatedDate()) : todayStr;
 
             Paragraph intro = new Paragraph(
-                    "Hợp Đồng dịch vụ cho thuê xe (Sau đây gọi là \"Hợp đồng\") được lập " + todayStr + " bởi và giữa các bên:"
+                    "Hợp đồng dịch vụ cho thuê xe (sau đây gọi tắt là \"Hợp đồng\") được lập ngày "
+                            + contractDateStr + " bởi và giữa các bên:"
             )
                     .setFont(font)
                     .setFontSize(11)
@@ -752,24 +748,24 @@ public class ContractMngServiceImpl implements ContractMngService {
             document.add(intro);
 
             // ========== BÊN A (CHO THUÊ XE) ==========
-            document.add(new Paragraph("BÊN CHO THUÊ XE (Gọi tắt là bên A): Hồi số")
+            document.add(new Paragraph("BÊN CHO THUÊ XE (Gọi tắt là bên A):")
                     .setFont(fontBold)
                     .setFontSize(11)
                     .setMarginBottom(3));
 
-            document.add(new Paragraph("Họ tên: Mạnh Hòa")
+            document.add(new Paragraph("Họ tên người đại diện: Đinh Hòa")
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
                     .setMarginBottom(2));
 
-            document.add(new Paragraph("Địa chỉ: ")
+            document.add(new Paragraph("Địa chỉ: Tổ 1, Thôn Cầu Mè, Phương Thiện, Hà Giang, Việt Nam")
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
                     .setMarginBottom(2));
 
-            document.add(new Paragraph("ĐT: 0859963203")
+            document.add(new Paragraph("ĐT: 0859963204")
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
@@ -781,52 +777,40 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setFontSize(11)
                     .setMarginBottom(3));
 
-            document.add(new Paragraph("Họ tên: " + (contract.getCustomerName() != null ? contract.getCustomerName() : ""))
+            document.add(new Paragraph("Họ tên: " + valueOrPlaceholder(contract.getCustomerName(), "[Tên khách hàng]"))
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
                     .setMarginBottom(2));
 
-            String address = "";
-            if (contract.getPickupAddress() != null && !contract.getPickupAddress().isEmpty()) {
-                address = contract.getPickupAddress();
-            } else if (contract.getReturnAddress() != null && !contract.getReturnAddress().isEmpty()) {
-                address = contract.getReturnAddress();
-            }
+            String address = contract.getPickupAddress() != null && !contract.getPickupAddress().isEmpty()
+                    ? contract.getPickupAddress()
+                    : contract.getReturnAddress();
 
-            document.add(new Paragraph("Địa chỉ: " + address)
+            document.add(new Paragraph("Địa chỉ: " + valueOrPlaceholder(address, "[Địa chỉ]"))
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
                     .setMarginBottom(2));
 
-            document.add(new Paragraph("ĐT: " + (contract.getPhoneNumber() != null ? contract.getPhoneNumber() : ""))
+            document.add(new Paragraph("ĐT: " + valueOrPlaceholder(contract.getPhoneNumber(), "[Số điện thoại]"))
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
                     .setMarginBottom(2));
 
-            document.add(new Paragraph("Hộ khẩu thường trú tại: Tổ Q Trung Hưng Thị Xã Sơn Tây Hà Nội")
+            document.add(new Paragraph("Ngày sinh: " + valueOrPlaceholder(null, "[Ngày sinh]"))
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
                     .setMarginBottom(5));
 
-            // Thông tin CMND
-            document.add(new Paragraph("Ngày sinh: 18/09/2004")
+            document.add(new Paragraph("CMND/CCCD: " + valueOrPlaceholder(contract.getCitizenId(), "[Căn cước công dân]"))
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
                     .setMarginBottom(2));
-
-            String cmnd = contract.getCitizenId() != null ? contract.getCitizenId() : "001204020429";
-            document.add(new Paragraph("CMND CCCD Hộ chiếu số " + cmnd + " do CỤC TRƯỞNG CỤC CẢNH SÁT QUẢN LÝ HÀNH CHÍNH VỀ TRẬT TỪ XÃ HỘI")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginLeft(20)
-                    .setMarginBottom(2));
-
-            document.add(new Paragraph("cấp ngày 31/05/2021")
+            document.add(new Paragraph("Ngày cấp: " + valueOrPlaceholder(null, "[Ngày cấp]"))
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
@@ -846,56 +830,42 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setFontSize(11)
                     .setMarginBottom(5));
 
-            document.add(new Paragraph("Bên A cho bên B thuê xe :")
+            document.add(new Paragraph("Bên A cho bên B thuê xe.")
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginBottom(3));
 
-            // Thông tin xe - lấy xe đầu tiên
-            ContractCarDTO firstCar = cars.get(0);
+            String startDateStr = contract.getStartDate() != null ? dateFormat.format(contract.getStartDate()) : "[Ngày thuê]";
+            String endDateStr = contract.getEndDate() != null ? dateFormat.format(contract.getEndDate()) : "[Ngày trả]";
 
-            Table carTable = new Table(new float[]{200f, 200f});
-            carTable.setWidth(com.itextpdf.layout.properties.UnitValue.createPercentValue(100));
-            carTable.setMarginBottom(10);
-
-            // Hàng 1: Nhãn hiệu, Biển số
-            carTable.addCell(createNoBorderCell("Nhãn hiệu : " + (firstCar.getCarModel() != null ? firstCar.getCarModel() : "Honda"), font));
-            carTable.addCell(createNoBorderCell("Biển số: " + (firstCar.getLicensePlate() != null ? firstCar.getLicensePlate() : ""), font));
-
-            // Hàng 2: Loại xe, Màu sơn
-            carTable.addCell(createNoBorderCell("Loại xe : " + (firstCar.getCarType() != null ? firstCar.getCarType() : "CX5"), font));
-            carTable.addCell(createNoBorderCell("Màu Sơn: ", font));
-
-            // Hàng 3: Số máy, Số khung
-            carTable.addCell(createNoBorderCell("Số máy : ", font));
-            carTable.addCell(createNoBorderCell("Số khung:", font));
-
-            // Hàng 4: Số chỗ ngồi, Đăng ký xe
-            carTable.addCell(createNoBorderCell("Số chỗ ngồi : 5 chỗ", font));
-            carTable.addCell(createNoBorderCell("Đăng ký xe:", font));
-
-            document.add(carTable);
-
-            // Thời gian thuê
-            String startDateStr = contract.getStartDate() != null ? dateFormat.format(contract.getStartDate()) : "";
-            String endDateStr = contract.getEndDate() != null ? dateFormat.format(contract.getEndDate()) : "";
-
-            document.add(new Paragraph("Thời gian thuê : 23:00 " + startDateStr + " đến 20:00 " + endDateStr)
+            document.add(new Paragraph("Thời gian thuê: " + startDateStr + " đến " + endDateStr)
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginBottom(3));
 
-            // Tiền thuê
             java.text.NumberFormat currencyFormat = java.text.NumberFormat.getInstance(new Locale("vi", "VN"));
-            String totalAmountStr = contract.getTotalRentalAmount() != null ?
-                    currencyFormat.format(contract.getTotalRentalAmount()) : "0";
+            String totalAmountStr = currencyFormat.format(
+                    contract.getTotalRentalAmount() != null ? contract.getTotalRentalAmount() : BigDecimal.ZERO);
+            String depositStr = currencyFormat.format(
+                    contract.getDepositAmount() != null ? contract.getDepositAmount() : BigDecimal.ZERO);
+            String remainingAmountStr = currencyFormat.format(
+                    contract.getRemainingAmount() != null ? contract.getRemainingAmount() : BigDecimal.ZERO);
 
-            document.add(new Paragraph("Tiền thuê : " + totalAmountStr + " (một trăm hai mươi nghìn đồng chẵn)")
+            document.add(new Paragraph("Tiền thuê: " + totalAmountStr + " đồng")
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginBottom(3));
 
-            // Cam đoan
+            document.add(new Paragraph("Tiền đặt cọc: " + depositStr + " đồng")
+                    .setFont(font)
+                    .setFontSize(11)
+                    .setMarginBottom(3));
+
+            document.add(new Paragraph("Còn lại: " + remainingAmountStr + " đồng")
+                    .setFont(font)
+                    .setFontSize(11)
+                    .setMarginBottom(3));
+
             document.add(new Paragraph("- Bên A cam đoan trước khi ký bản Hợp đồng này, xe ô tô nêu trên:")
                     .setFont(font)
                     .setFontSize(11)
@@ -913,57 +883,13 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setMarginLeft(20)
                     .setMarginBottom(10));
 
-            // ========== ĐIỀU 2: PHÍ DỊCH VỤ VÀ PHƯƠNG THỨC THANH TOÁN ==========
-            document.add(new Paragraph("Điều 2. Phí dịch vụ và phương thức thanh toán")
+            // ========== ĐIỀU 2: PHƯƠNG THỨC THANH TOÁN ==========
+            document.add(new Paragraph("Điều 2. Phương thức thanh toán")
                     .setFont(fontBold)
                     .setFontSize(11)
                     .setMarginBottom(5));
 
-            document.add(new Paragraph("1. Phí dịch vụ")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginBottom(3));
-
-            // Chi phí
-            String finalAmountStr = contract.getFinalAmount() != null ?
-                    currencyFormat.format(contract.getFinalAmount()) : "0";
-
-            document.add(new Paragraph("- Phí dịch vụ là " + finalAmountStr + " đồng (hai triệu tám trăm bốn mươi nghìn hai trăm đồng chẵn).")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginLeft(20)
-                    .setMarginBottom(2));
-
-            String paidAmountStr = contract.getPaidAmount() != null && contract.getPaidAmount().compareTo(BigDecimal.ZERO) > 0 ?
-                    currencyFormat.format(contract.getPaidAmount()) : "0";
-
-            document.add(new Paragraph("- Đã cọc : " + paidAmountStr + " đồng ( đồng chẵn)")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginLeft(20)
-                    .setMarginBottom(2));
-
-            String remainingAmountStr = contract.getRemainingAmount() != null ?
-                    currencyFormat.format(contract.getRemainingAmount()) : "0";
-
-            document.add(new Paragraph("- Còn lại : " + remainingAmountStr + " đồng (hai triệu tám trăm bốn mươi nghìn hai trăm đồng chẵn)")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginLeft(20)
-                    .setMarginBottom(2));
-
-            document.add(new Paragraph("- Khoản phí dịch vụ trên đã bao gồm tiền xăng xe; phí cầu, đường, bến bãi; tiền ăn, của lái xe nhưng chưa bao gồm thuế giá trị gia tăng (VAT).")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginLeft(20)
-                    .setMarginBottom(5));
-
-            document.add(new Paragraph("2. Phương thức thanh toán")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginBottom(3));
-
-            document.add(new Paragraph("- Khoản phí dịch vụ trên được thanh toán trực tiếp bằng tiền mặt hoặc chuyển vào tài khoản ngân hàng do Bên B chỉ định túy từng thời điểm khác nhau.")
+            document.add(new Paragraph("- Khoản phí dịch vụ trên được thanh toán trực tiếp bằng tiền mặt hoặc chuyển vào tài khoản ngân hàng do Bên B chỉ định tùy từng thời điểm khác nhau.")
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
@@ -1010,117 +936,135 @@ public class ContractMngServiceImpl implements ContractMngService {
         }
     }
 
-    // Helper method to create cell without border
-    private com.itextpdf.layout.element.Cell createNoBorderCell(String text, com.itextpdf.kernel.font.PdfFont font) {
-        return new com.itextpdf.layout.element.Cell()
-                .add(new Paragraph(text).setFont(font).setFontSize(11))
-                .setBorder(null)
-                .setPadding(2);
+    private String valueOrPlaceholder(String value, String placeholder) {
+        return (value != null && !value.trim().isEmpty()) ? value : placeholder;
     }
 
     // Helper method to add remaining clauses
     private void addRemainingClauses(Document document, com.itextpdf.kernel.font.PdfFont font, com.itextpdf.kernel.font.PdfFont fontBold) {
-        // ĐIỀU 3
         document.add(new Paragraph("Điều 3. Trách nhiệm của Bên B")
                 .setFont(fontBold)
                 .setFontSize(11)
                 .setMarginBottom(5));
 
-        com.itextpdf.layout.element.List list1 = new com.itextpdf.layout.element.List()
-                .setSymbolIndent(10)
-                .setListSymbol("\u2022")
+        document.add(new Paragraph("1. Nhận xe đúng thời gian và địa điểm theo thỏa thuận trong Hợp đồng;")
                 .setFont(font)
-                .setFontSize(11);
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(2));
+        document.add(new Paragraph("2. Bảo quản xe trong suốt quá trình sử dụng;")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(2));
+        document.add(new Paragraph("3. Bồi thường thiệt hại cho Bên A nếu gây ra thiệt hại trong quá trình sử dụng xe;")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(2));
+        document.add(new Paragraph("4. Các nghĩa vụ khác theo quy định của pháp luật hiện hành.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(10));
 
-        list1.add(new com.itextpdf.layout.element.ListItem("Đưa, đón người của Bên A đúng thời gian và địa điểm thỏa thuận của Hợp đồng;"));
-        list1.add(new com.itextpdf.layout.element.ListItem("Đảm bảo chất lượng xe tốt và lái xe an toàn trong quá trình đưa đón của Bên A;"));
-        list1.add(new com.itextpdf.layout.element.ListItem("Có trách nhiệm mua bảo hiểm dân sự cho xe và người được vận tải trên xe;"));
-        list1.add(new com.itextpdf.layout.element.ListItem("Bồi thường thiệt hại cho Bên A nếu gây ra thiệt hại trong quá trình thực hiện các công việc trên;"));
-        list1.add(new com.itextpdf.layout.element.ListItem("Các nghĩa vụ khác theo quy định của pháp luật hiện hành."));
-
-        document.add(list1);
-        document.add(new Paragraph("\n"));
-
-        // ĐIỀU 4
         document.add(new Paragraph("Điều 4. Trách nhiệm của Bên A")
                 .setFont(fontBold)
                 .setFontSize(11)
                 .setMarginBottom(5));
 
-        com.itextpdf.layout.element.List list2 = new com.itextpdf.layout.element.List()
-                .setSymbolIndent(10)
-                .setListSymbol("\u2022")
-                .setFont(font)
-                .setFontSize(11);
-
-        list2.add(new com.itextpdf.layout.element.ListItem("Thông báo chính xác thời gian và địa điểm đưa, đón cho Bên A trước ít nhất là 2h nếu có sự thay đổi;"));
-        list2.add(new com.itextpdf.layout.element.ListItem("Thanh toán đầy đủ và đúng hạn khoản phí dịch vụ theo quy định tại Điều 2 cho Bên B;"));
-        list2.add(new com.itextpdf.layout.element.ListItem("Các nghĩa vụ khác theo quy định của pháp luật."));
-
-        document.add(list2);
-        document.add(new Paragraph("\n"));
-
-        // ĐIỀU 5
-        document.add(new Paragraph("Điều 5. Xử lý bồi thường bảo hiểm và xử lý vi phạm hợp đồng")
-                .setFont(fontBold)
-                .setFontSize(11)
-                .setMarginBottom(5));
-
-        document.add(new Paragraph("1. Trong trường hợp Bên A có sự thay đổi về kế hoạch do yêu cầu của công việc hoặc do yếu tố khách quan khác mà không thể tiến hành theo đúng thời gian tại Điều 1 thì phải thông báo cho Bên A trước ít nhất là 02 ngày trước ngày tiến hành công việc tại Điều 1 đồng thời bảo lưu cho Bên A chính thức được di dời, dịch chuyển thời gian chính xác để đưa đón Bên A. Nếu Bên B vẫn không thể tiến hành theo đúng thời gian tại Điều 1 do trình do trên thì Bên A vẫn không tiền tiến hành theo đúng thời gian tại Điều 1. Trong trường hợp đã lùi lại thời gian mà Bên A vẫn không thể tiến hành theo đúng thời gian thì thuận lũi lại thời gian mà Bên B không phải hoàn trả lại số tiền đã thanh toán trước.")
-                .setFont(font)
-                .setFontSize(11)
-                .setMarginBottom(5));
-
-        document.add(new Paragraph("2. Trong trường hợp Bên B không đưa, đón đúng xe theo đúng thời gian thỏa thuận tại Điều 1 thì phải thông báo trước cho Bên A ít nhất là 2 ngày trước ngày tiến hành công việc tại Điều 1 đồng thời bảo lưu cho Bên A thời gian chính xác để đưa đón Bên A. Nếu Bên B vẫn không thể tiến hành theo đúng thời gian tại Điều 1 do thời gian chính xác để đưa đón Bên A không thể trả lại cho Bên A thời gian chính xác đề đưa đón. Nếu Bên B vẫn không đóng thời gian tại Điều 1 do thời gian chính xác để đưa đón Bên A trong bị phát một khoản tiền bằng với số tiền Bên A đã thanh toán trước.")
-                .setFont(font)
-                .setFontSize(11)
-                .setMarginBottom(5));
-
-        document.add(new Paragraph("3. Nếu một trong các bên có sự thay đổi về thời gian theo quy định tại Điều 1 mà không báo trước 2 ngày thì phải chịu trách nhiệm về chi phí xử lý như sau:")
-                .setFont(font)
-                .setFontSize(11)
-                .setMarginBottom(3));
-
-        document.add(new Paragraph("- Bên B phải trả lại Bên A khoản tiền đã thanh toán trước đồng thời bị phạt một khoản tiền bằng với khoản tiền đã đặt trước.")
+        document.add(new Paragraph("1. Cung cấp xe đúng thời gian và địa điểm thỏa thuận trong Hợp đồng;")
                 .setFont(font)
                 .setFontSize(11)
                 .setMarginLeft(20)
                 .setMarginBottom(2));
-
-        document.add(new Paragraph("- Bên A sẽ không được hoàn lại số tiền đã thanh toán trước.")
+        document.add(new Paragraph("2. Đảm bảo xe có chất lượng tốt, đầy đủ giấy tờ và bảo hành trong suốt thời gian cho thuê;")
                 .setFont(font)
                 .setFontSize(11)
                 .setMarginLeft(20)
-                .setMarginBottom(5));
-
-        document.add(new Paragraph("4. Trong trường hợp việc thay đổi thời gian của một bên mà gây thiệt hại cho bên còn lại (kể cả đã thông báo trước 2 ngày) thì bên có lỗi phải bồi thường thiệt hại do sự thay đổi thời gian.")
+                .setMarginBottom(2));
+        document.add(new Paragraph("3. Thông báo cho Bên B về các thay đổi liên quan đến xe (nếu có);")
                 .setFont(font)
                 .setFontSize(11)
-                .setMarginBottom(5));
-
-        document.add(new Paragraph("5. Trong trường hợp Bên B không đón Bên A từ ___về ___theo đúng thời hạn quy định tại Điều 1 thì phải chịu các chi phí ăn, nghỉ cho Bên A cho thời gian chậm đến về theo giá thực tế.")
+                .setMarginLeft(20)
+                .setMarginBottom(2));
+        document.add(new Paragraph("4. Các nghĩa vụ khác theo quy định của pháp luật.")
                 .setFont(font)
                 .setFontSize(11)
+                .setMarginLeft(20)
                 .setMarginBottom(10));
 
-        // ĐIỀU 6
+        document.add(new Paragraph("Điều 5. Thông báo và xử lý vi phạm hợp đồng")
+                .setFont(fontBold)
+                .setFontSize(11)
+                .setMarginBottom(5));
+
+        document.add(new Paragraph("1. Trong trường hợp Bên A thay đổi kế hoạch do yêu cầu công việc hoặc yếu tố khách quan, Bên A phải thông báo cho Bên B ít nhất 2 ngày trước ngày giao xe. Nếu Bên A không thể thực hiện theo thời gian mới, Bên B không cần hoàn trả tiền đã thanh toán.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(3));
+        document.add(new Paragraph("2. Nếu Bên B không thể nhận xe đúng thời gian thỏa thuận, Bên B phải thông báo trước cho Bên A ít nhất 2 ngày và thỏa thuận lại thời gian nhận xe. Nếu Bên B không thực hiện theo thời gian đã thỏa thuận, Bên B phải hoàn trả số tiền đã thanh toán.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(3));
+        document.add(new Paragraph("3. Nếu Bên B không trả xe đúng thời gian thỏa thuận tại Điều 1, Bên B phải thông báo cho Bên A ít nhất 2 ngày trước ngày trả xe và thỏa thuận lại thời gian trả xe. Nếu Bên B không trả xe đúng thời gian đã thỏa thuận, Bên B phải chịu thêm một khoản phụ thu.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(3));
+        document.add(new Paragraph("4. Nếu một trong các bên có sự thay đổi về thời gian theo quy định tại Điều 1 mà không báo trước 2 ngày thì phải chịu trách nhiệm xử lý như sau:")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(2));
+        document.add(new Paragraph("- Bên B phải trả lại Bên A khoản tiền đã thanh toán trước;")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(35)
+                .setMarginBottom(2));
+        document.add(new Paragraph("- Bên A sẽ không được hoàn lại số tiền đã thanh toán trước.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(35)
+                .setMarginBottom(3));
+        document.add(new Paragraph("5. Trong trường hợp việc thay đổi thời gian của một bên mà gây thiệt hại cho bên còn lại (kể cả đã thông báo trước 2 ngày) thì bên có lỗi phải bồi thường thiệt hại do sự thay đổi thời gian.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(3));
+        document.add(new Paragraph("6. Nếu một trong các bên không thực hiện đúng thời hạn quy định tại Điều 1 thì phải chịu các chi phí phát sinh (ăn, nghỉ...) theo giá thực tế.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(10));
+
         document.add(new Paragraph("Điều 6. Các thỏa thuận khác")
                 .setFont(fontBold)
                 .setFontSize(11)
                 .setMarginBottom(5));
 
-        com.itextpdf.layout.element.List list3 = new com.itextpdf.layout.element.List()
-                .setSymbolIndent(10)
-                .setListSymbol("\u2022")
+        document.add(new Paragraph("1. Hai bên cam kết thực hiện đầy đủ các thỏa thuận trong Hợp đồng này.")
                 .setFont(font)
-                .setFontSize(11);
-
-        list3.add(new com.itextpdf.layout.element.ListItem("Hai bên cam kết thực hiện đầy đủ các thỏa thuận trong Hợp đồng này."));
-        list3.add(new com.itextpdf.layout.element.ListItem("Những nội dung không được thỏa thuận trong Hợp đồng này thì áp dụng các văn bản pháp luật hiện hành có liên quan;"));
-        list3.add(new com.itextpdf.layout.element.ListItem("Nếu có tranh chấp phát sinh từ Hợp đồng này thì các bên trước hết phải cùng nhau giải quyết bằng thương lượng, hòa giải. Nếu không đạt được sự thương lượng, hòa giải thì mỗi bên có quyền khởi kiện ra tòa án để giải quyết theo thủ tục chung của pháp luật."));
-        list3.add(new com.itextpdf.layout.element.ListItem("Hợp đồng này gồm 2 trang, và được lập thành 02 (hai) bản, mỗi bên giữ 01 bản, có giá trị pháp lý như nhau và có hiệu lực từ ngày ký."));
-
-        document.add(list3);
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(2));
+        document.add(new Paragraph("2. Những nội dung không được thỏa thuận trong Hợp đồng này thì áp dụng các văn bản pháp luật hiện hành có liên quan.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(2));
+        document.add(new Paragraph("3. Nếu có tranh chấp phát sinh từ Hợp đồng này thì các bên trước hết phải cùng nhau giải quyết bằng thương lượng, hòa giải. Nếu không đạt được sự thương lượng, hòa giải thì mỗi bên có quyền khởi kiện ra tòa án để giải quyết theo thủ tục chung của pháp luật.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(2));
+        document.add(new Paragraph("4. Hợp đồng này gồm 2 trang, và được lập thành 02 (hai) bản, mỗi bên giữ 01 bản, có giá trị pháp lý như nhau và có hiệu lực từ ngày ký.")
+                .setFont(font)
+                .setFontSize(11)
+                .setMarginLeft(20)
+                .setMarginBottom(10));
     }
 
     // ========== Helper Methods ==========
