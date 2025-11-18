@@ -171,6 +171,7 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
     List<DailyRevenueProjection> sumDailyRevenueByBranchAndDate(@Param("branchId") String branchId,
                                                                 @Param("startDate") Date startDate,
                                                                 @Param("endDate") Date endDate);
+
 }
 
 

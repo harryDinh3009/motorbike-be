@@ -2,6 +2,7 @@ package com.motorbikebe.business.admin.contractMng.web;
 
 import com.motorbikebe.business.admin.contractMng.excel.ContractExcelService;
 import com.motorbikebe.business.admin.contractMng.service.ContractMngService;
+import com.motorbikebe.business.admin.contractMng.service.ContractReceiptService;
 import com.motorbikebe.common.ApiResponse;
 import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.common.PageableObject;
@@ -34,6 +35,7 @@ public class ContractMngController {
 
     private final ContractMngService contractMngService;
     private final ContractExcelService contractExcelService;
+    private final ContractReceiptService contractReceiptService;
 
     // ========== CRUD Operations ==========
 
@@ -304,5 +306,22 @@ public class ContractMngController {
                 })
                 .collect(Collectors.toList());
         return new ApiResponse<>(ApiStatus.SUCCESS, statuses);
+    }
+
+    /**
+     * Export biên nhận trả xe
+     */
+    @PostMapping("/receipt/export")
+    public ResponseEntity<byte[]> exportContractReceipt(@RequestBody ContractReceiptRequestDTO requestDTO) {
+        byte[] pdfBytes = contractReceiptService.exportReceipt(requestDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment",
+                "bien-nhan-hop-dong-" + (requestDTO.getContractId() != null ? requestDTO.getContractId() : "") + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
     }
 }
