@@ -3,6 +3,7 @@ package com.motorbikebe.business.admin.contractMng.web;
 import com.motorbikebe.business.admin.contractMng.excel.ContractExcelService;
 import com.motorbikebe.business.admin.contractMng.service.ContractMngService;
 import com.motorbikebe.business.admin.contractMng.service.ContractReceiptService;
+import com.motorbikebe.business.admin.contractMng.service.ContractReportService;
 import com.motorbikebe.common.ApiResponse;
 import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.common.PageableObject;
@@ -36,6 +37,7 @@ public class ContractMngController {
     private final ContractMngService contractMngService;
     private final ContractExcelService contractExcelService;
     private final ContractReceiptService contractReceiptService;
+    private final ContractReportService contractReportService;
 
     // ========== CRUD Operations ==========
 
@@ -319,6 +321,23 @@ public class ContractMngController {
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment",
                 "bien-nhan-hop-dong-" + (requestDTO.getContractId() != null ? requestDTO.getContractId() : "") + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    /**
+     * Export báo cáo doanh thu theo tháng
+     */
+    @PostMapping("/revenue/monthly-report")
+    public ResponseEntity<byte[]> exportMonthlyRevenueReport(@RequestBody MonthlyRevenueReportRequestDTO requestDTO) {
+        byte[] pdfBytes = contractReportService.exportMonthlyRevenueReport(requestDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment",
+                "Bao_Cao_Doanh_Thu_" + requestDTO.getYear() + ".pdf");
 
         return ResponseEntity.ok()
                 .headers(headers)
