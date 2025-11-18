@@ -1,5 +1,6 @@
 package com.motorbikebe.dto.business.admin.contractMng;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.motorbikebe.constant.enumconstant.ContractStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,6 +41,7 @@ public class ContractDTO {
     private Boolean needPickupDelivery; // Có cần giao xe tận nơi khi nhận
     private Boolean needReturnDelivery; // Có cần nhận xe tận nơi khi trả
     private String notes; // Ghi chú nội bộ
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+07:00")
     private Date createdDate; // Thời gian tạo hợp đồng
     
     // Financial Info

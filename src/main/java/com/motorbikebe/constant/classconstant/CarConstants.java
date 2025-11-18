@@ -14,7 +14,7 @@ public class CarConstants {
     public static final List<String> CAR_TYPES = Arrays.asList(
             "Xe số",
             "Xe ga",
-            "Xe cao cấo",
+            "Xe cao cấp",
             "Xe tay côn"
     );
 
