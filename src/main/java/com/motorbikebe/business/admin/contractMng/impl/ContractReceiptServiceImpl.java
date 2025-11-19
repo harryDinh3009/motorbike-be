@@ -109,7 +109,7 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
             addHeaderCell(carTable, "Biển số", fontBold);
             addHeaderCell(carTable, "Giá thuê", fontBold);
 
-            NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
+        NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
 
             int index = 1;
             for (ContractCarDTO car : cars) {
@@ -117,7 +117,8 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
                 carTable.addCell(createBodyCell(defaultString(car.getCarType()), font));
                 carTable.addCell(createBodyCell(defaultString(car.getCarModel()), font));
                 carTable.addCell(createBodyCell(defaultString(car.getLicensePlate()), font));
-                carTable.addCell(createBodyCell(formatCurrency(car.getTotalAmount(), currencyFormat), font));
+            BigDecimal carAmount = calculateCarRentalAmount(contract, car);
+            carTable.addCell(createBodyCell(formatCurrency(carAmount, currencyFormat), font));
             }
             document.add(carTable);
 
@@ -190,6 +191,54 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
             return "";
         }
         return format.format(date);
+    }
+
+    private BigDecimal calculateCarRentalAmount(ContractDTO contract, ContractCarDTO car) {
+        java.util.Date startDate = contract.getStartDate();
+        java.util.Date endDate = contract.getEndDate();
+
+        if (startDate == null || endDate == null) {
+            return safeAmount(car.getTotalAmount());
+        }
+
+        long diffMillis = endDate.getTime() - startDate.getTime();
+        if (diffMillis <= 0) {
+            return safeAmount(car.getTotalAmount());
+        }
+
+        long totalMinutes = diffMillis / (60 * 1000);
+        long minutesPerDay = 24L * 60L;
+
+        long fullDays = totalMinutes / minutesPerDay;
+        long remainingMinutes = totalMinutes % minutesPerDay;
+        long extraHours = 0;
+
+        if (fullDays == 0) {
+            fullDays = 1;
+        } else {
+            extraHours = remainingMinutes / 60;
+            long remainingMinutesAfterHours = remainingMinutes % 60;
+            if (remainingMinutesAfterHours > 30) {
+                extraHours++;
+            }
+            if (extraHours > 8) {
+                fullDays++;
+                extraHours = 0;
+            }
+        }
+
+        BigDecimal dayPrice = safeAmount(car.getDailyPrice());
+        BigDecimal hourPrice = safeAmount(car.getHourlyPrice());
+
+        BigDecimal total = dayPrice.multiply(BigDecimal.valueOf(fullDays));
+        if (extraHours > 0) {
+            total = total.add(hourPrice.multiply(BigDecimal.valueOf(extraHours)));
+        }
+        return total;
+    }
+
+    private BigDecimal safeAmount(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
     }
 }
 
