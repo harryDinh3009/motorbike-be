@@ -3,7 +3,6 @@ package com.motorbikebe.repository.business.admin;
 import com.motorbikebe.constant.enumconstant.ContractStatus;
 import com.motorbikebe.dto.business.admin.contractMng.ContractDTO;
 import com.motorbikebe.dto.business.admin.contractMng.ContractSearchDTO;
-import com.motorbikebe.dto.business.admin.contractMng.MonthlyRevenueRowDTO;
 import com.motorbikebe.entity.domain.ContractEntity;
 import com.motorbikebe.repository.projection.ContractRevenueProjection;
 import com.motorbikebe.repository.projection.DailyRevenueProjection;
@@ -172,22 +171,6 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
     List<DailyRevenueProjection> sumDailyRevenueByBranchAndDate(@Param("branchId") String branchId,
                                                                 @Param("startDate") Date startDate,
                                                                 @Param("endDate") Date endDate);
-
-    @Query(value = """
-            SELECT 
-                MONTH(con.created_date) AS month,
-                COALESCE(SUM(con.total_rental_amount), 0) AS rentalAmount,
-                COALESCE(SUM(con.total_surcharge), 0) AS surchargeAmount,
-                COALESCE(SUM(con.discount_amount), 0) AS discountAmount
-            FROM contract con
-            WHERE YEAR(con.created_date) = :year
-              AND con.status <> 'CANCELLED'
-              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
-            GROUP BY MONTH(con.created_date)
-            ORDER BY month
-            """, nativeQuery = true)
-    List<Object[]> sumMonthlyRevenue(@Param("year") int year, @Param("branchId") String branchId);
-
 }
 
 

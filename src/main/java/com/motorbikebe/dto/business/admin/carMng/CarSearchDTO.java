@@ -17,9 +17,6 @@ public class CarSearchDTO extends PageableDTO {
     /** Lọc theo chi nhánh */
     private String branchId;
 
-    /** Lọc theo mẫu xe cụ thể */
-    private String modelName;
-
     /** Lọc theo loại xe */
     private String carType;
 
