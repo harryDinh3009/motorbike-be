@@ -60,6 +60,14 @@ public class ContractMngServiceImpl implements ContractMngService {
 
     @Override
     public PageableObject<ContractDTO> searchContracts(ContractSearchDTO searchDTO) {
+        // Set end dates to end of day (23:59:59) to include all contracts on that day
+        if (searchDTO.getStartDateTo() != null) {
+            searchDTO.setStartDateTo(setEndOfDay(searchDTO.getStartDateTo()));
+        }
+        if (searchDTO.getEndDateTo() != null) {
+            searchDTO.setEndDateTo(setEndOfDay(searchDTO.getEndDateTo()));
+        }
+        
         Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
         Page<ContractDTO> contractPage = contractRepository.searchContracts(pageable, searchDTO);
 
@@ -100,11 +108,18 @@ public class ContractMngServiceImpl implements ContractMngService {
         // Load customer info
         Optional<CustomerEntity> customer = customerRepository.findById(contract.getCustomerId());
         if (customer.isPresent()) {
-            contractDTO.setCustomerName(customer.get().getFullName());
-            contractDTO.setPhoneNumber(customer.get().getPhoneNumber());
-            contractDTO.setEmail(customer.get().getEmail());
-            contractDTO.setCountry(customer.get().getCountry());
-            contractDTO.setCitizenId(customer.get().getCitizenId());
+            CustomerEntity customerEntity = customer.get();
+            contractDTO.setCustomerName(customerEntity.getFullName());
+            contractDTO.setPhoneNumber(customerEntity.getPhoneNumber());
+            contractDTO.setEmail(customerEntity.getEmail());
+            contractDTO.setCountry(customerEntity.getCountry());
+            contractDTO.setCitizenId(customerEntity.getCitizenId());
+            contractDTO.setCustomerAddress(customerEntity.getAddress());
+            contractDTO.setCustomerDateOfBirth(customerEntity.getDateOfBirth());
+            // Hiện tại hệ thống chưa lưu riêng ngày cấp CCCD, tạm thời dùng ngày tạo hồ sơ khách
+            if (customerEntity.getCreatedDate() != null) {
+                contractDTO.setCitizenIdIssuedDate(new Date(customerEntity.getCreatedDate()));
+            }
             contractDTO.setCreatedDate(new Date(contractOpt.get().getCreatedDate()));
 
             // Count total contracts
@@ -272,20 +287,17 @@ public class ContractMngServiceImpl implements ContractMngService {
 
     @Override
     @Transactional
-    public Boolean deleteContract(String id) {
+    public Boolean cancelContract(String id) {
         Optional<ContractEntity> contractOpt = contractRepository.findById(id);
         if (!contractOpt.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
 
-        // Delete related data
-        contractCarRepository.deleteByContractId(id);
-        surchargeRepository.deleteByContractId(id);
-        paymentTransactionRepository.deleteByContractId(id);
-        contractImageRepository.deleteByContractId(id);
-
-        // Delete contract
-        contractRepository.deleteById(id);
+        // Chuyển status thành CANCELLED thay vì xóa để giữ lịch sử
+        ContractEntity contract = contractOpt.get();
+        contract.setStatus(ContractStatus.CANCELLED);
+        contractRepository.save(contract);
+        
         return true;
     }
 
@@ -756,6 +768,7 @@ public class ContractMngServiceImpl implements ContractMngService {
 
             // ========== MỞ ĐẦU ==========
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
             String todayStr = dateFormat.format(new Date());
             String contractDateStr = contract.getCreatedDate() != null ?
                     dateFormat.format(contract.getCreatedDate()) : todayStr;
@@ -806,9 +819,10 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setMarginLeft(20)
                     .setMarginBottom(2));
 
-            String address = contract.getPickupAddress() != null && !contract.getPickupAddress().isEmpty()
-                    ? contract.getPickupAddress()
-                    : contract.getReturnAddress();
+            String address = firstNonEmpty(
+                    contract.getCustomerAddress(),
+                    contract.getPickupAddress(),
+                    contract.getReturnAddress());
 
             document.add(new Paragraph("Địa chỉ: " + valueOrPlaceholder(address, "[Địa chỉ]"))
                     .setFont(font)
@@ -822,18 +836,13 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setMarginLeft(20)
                     .setMarginBottom(2));
 
-            document.add(new Paragraph("Ngày sinh: " + valueOrPlaceholder(null, "[Ngày sinh]"))
+            document.add(new Paragraph("Ngày sinh: " + formatDateValue(contract.getCustomerDateOfBirth(), "dd/MM/yyyy", "[Ngày sinh]"))
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
                     .setMarginBottom(5));
 
             document.add(new Paragraph("CMND/CCCD: " + valueOrPlaceholder(contract.getCitizenId(), "[Căn cước công dân]"))
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginLeft(20)
-                    .setMarginBottom(2));
-            document.add(new Paragraph("Ngày cấp: " + valueOrPlaceholder(null, "[Ngày cấp]"))
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginLeft(20)
@@ -858,8 +867,8 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setFontSize(11)
                     .setMarginBottom(3));
 
-            String startDateStr = contract.getStartDate() != null ? dateFormat.format(contract.getStartDate()) : "[Ngày thuê]";
-            String endDateStr = contract.getEndDate() != null ? dateFormat.format(contract.getEndDate()) : "[Ngày trả]";
+            String startDateStr = formatDateValue(contract.getStartDate(), "dd/MM/yyyy HH:mm", "[Ngày thuê]", "GMT+7");
+            String endDateStr = formatDateValue(contract.getEndDate(), "dd/MM/yyyy HH:mm", "[Ngày trả]", "GMT+7");
 
             document.add(new Paragraph("Thời gian thuê: " + startDateStr + " đến " + endDateStr)
                     .setFont(font)
@@ -869,22 +878,8 @@ public class ContractMngServiceImpl implements ContractMngService {
             java.text.NumberFormat currencyFormat = java.text.NumberFormat.getInstance(new Locale("vi", "VN"));
             String totalAmountStr = currencyFormat.format(
                     contract.getTotalRentalAmount() != null ? contract.getTotalRentalAmount() : BigDecimal.ZERO);
-            String depositStr = currencyFormat.format(
-                    contract.getDepositAmount() != null ? contract.getDepositAmount() : BigDecimal.ZERO);
-            String remainingAmountStr = currencyFormat.format(
-                    contract.getRemainingAmount() != null ? contract.getRemainingAmount() : BigDecimal.ZERO);
 
             document.add(new Paragraph("Tiền thuê: " + totalAmountStr + " đồng")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginBottom(3));
-
-            document.add(new Paragraph("Tiền đặt cọc: " + depositStr + " đồng")
-                    .setFont(font)
-                    .setFontSize(11)
-                    .setMarginBottom(3));
-
-            document.add(new Paragraph("Còn lại: " + remainingAmountStr + " đồng")
                     .setFont(font)
                     .setFontSize(11)
                     .setMarginBottom(3));
@@ -963,6 +958,31 @@ public class ContractMngServiceImpl implements ContractMngService {
         return (value != null && !value.trim().isEmpty()) ? value : placeholder;
     }
 
+    private String formatDateValue(Date date, String pattern, String placeholder) {
+        return formatDateValue(date, pattern, placeholder, "GMT+7");
+    }
+
+    private String formatDateValue(Date date, String pattern, String placeholder, String timezone) {
+        if (date == null) {
+            return placeholder;
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone(timezone));
+        return sdf.format(date);
+    }
+
+    private String firstNonEmpty(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
     // Helper method to add remaining clauses
     private void addRemainingClauses(Document document, com.itextpdf.kernel.font.PdfFont font, com.itextpdf.kernel.font.PdfFont fontBold) {
         document.add(new Paragraph("Điều 3. Trách nhiệm của Bên B")
@@ -975,7 +995,7 @@ public class ContractMngServiceImpl implements ContractMngService {
                 .setFontSize(11)
                 .setMarginLeft(20)
                 .setMarginBottom(2));
-        document.add(new Paragraph("2. Bảo quản xe trong suốt quá trình sử dụng;")
+        document.add(new Paragraph("2. Đảm bảo sử dụng xe đúng mục đích, đảm bảo chất lượng xe tốt và lái xe an toàn trong suốt quá trình thuê;")
                 .setFont(font)
                 .setFontSize(11)
                 .setMarginLeft(20)
@@ -1091,6 +1111,22 @@ public class ContractMngServiceImpl implements ContractMngService {
     }
 
     // ========== Helper Methods ==========
+
+    /**
+     * Set time to end of day (23:59:59.999) for date filtering
+     */
+    private Date setEndOfDay(Date date) {
+        if (date == null) {
+            return null;
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar.getTime();
+    }
 
     private BigDecimal calculateDiscountAmount(BigDecimal totalAmount, String discountType, BigDecimal discountValue) {
         if (discountValue == null || discountValue.compareTo(BigDecimal.ZERO) == 0) {

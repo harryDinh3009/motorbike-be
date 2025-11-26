@@ -7,6 +7,7 @@ import com.motorbikebe.dto.business.admin.carMng.CarModelDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarModelSaveDTO;
 import com.motorbikebe.entity.domain.CarModelEntity;
 import com.motorbikebe.repository.business.admin.CarModelRepository;
+import com.motorbikebe.repository.business.admin.CarRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class CarModelServiceImpl implements CarModelService {
 
     private final CarModelRepository carModelRepository;
+    private final CarRepository carRepository;
     private final ModelMapper modelMapper;
 
     @Override
@@ -89,6 +91,13 @@ public class CarModelServiceImpl implements CarModelService {
     public Boolean deleteCarModel(String id) {
         CarModelEntity entity = carModelRepository.findById(id)
                 .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
+        
+        // Kiểm tra xem có xe nào đang dùng mẫu xe này không
+        boolean hasCars = carRepository.existsByModel(entity.getName());
+        if (hasCars) {
+            throw new RestApiException(ApiStatus.CANNOT_DELETE_CAR_MODEL_HAS_CARS);
+        }
+        
         carModelRepository.delete(entity);
         return true;
     }

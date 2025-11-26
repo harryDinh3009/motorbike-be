@@ -24,7 +24,13 @@ public interface ContractCarRepository extends JpaRepository<ContractCarEntity, 
     /**
      * Kiểm tra xe có trong hợp đồng không
      */
-    @Query("SELECT COUNT(cc) > 0 FROM ContractCarEntity cc WHERE cc.contractId = :contractId AND cc.carId = :carId")
+    @Query("SELECT CASE WHEN COUNT(cc) > 0 THEN true ELSE false END FROM ContractCarEntity cc WHERE cc.contractId = :contractId AND cc.carId = :carId")
     boolean existsByContractIdAndCarId(@Param("contractId") String contractId, @Param("carId") String carId);
+
+    /**
+     * Kiểm tra xe có trong bất kỳ hợp đồng nào không
+     */
+    @Query("SELECT CASE WHEN COUNT(cc) > 0 THEN true ELSE false END FROM ContractCarEntity cc WHERE cc.carId = :carId")
+    boolean existsByCarId(@Param("carId") String carId);
 }
 

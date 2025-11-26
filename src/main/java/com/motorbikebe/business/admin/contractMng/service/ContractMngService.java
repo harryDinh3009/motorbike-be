@@ -29,9 +29,9 @@ public interface ContractMngService {
     ContractEntity saveContract(@Valid ContractSaveDTO saveDTO);
 
     /**
-     * Xóa hợp đồng
+     * Hủy hợp đồng (chuyển status thành CANCELLED)
      */
-    Boolean deleteContract(String id);
+    Boolean cancelContract(String id);
 
     // ========== Contract Cars ==========
     

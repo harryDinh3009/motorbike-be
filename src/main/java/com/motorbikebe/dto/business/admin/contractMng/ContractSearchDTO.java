@@ -21,8 +21,10 @@ public class ContractSearchDTO extends PageableDTO {
     private String keyword;
     
     // Filter
-    private Date startDateFrom;
-    private Date startDateTo;
+    private Date startDateFrom;  // Ngày thuê từ
+    private Date startDateTo;    // Ngày thuê đến
+    private Date endDateFrom;    // Ngày trả từ
+    private Date endDateTo;      // Ngày trả đến
     private String pickupBranchId;
     private String returnBranchId;
     private ContractStatus status;

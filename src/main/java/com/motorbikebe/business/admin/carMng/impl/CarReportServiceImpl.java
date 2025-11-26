@@ -94,7 +94,8 @@ public class CarReportServiceImpl implements CarReportService {
                     .setTextAlignment(TextAlignment.CENTER)
                     .setMarginBottom(5));
 
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
             String dateRange = String.format("Từ ngày %s tới ngày %s",
                     dateFormat.format(request.getStartDate()),
                     dateFormat.format(request.getEndDate()));

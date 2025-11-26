@@ -10,7 +10,11 @@ import com.motorbikebe.dto.business.admin.branchMng.BranchSaveDTO;
 import com.motorbikebe.dto.business.admin.branchMng.BranchSearchDTO;
 import com.motorbikebe.dto.common.userCurrent.UserCurrentInfoDTO;
 import com.motorbikebe.entity.domain.BranchEntity;
+import com.motorbikebe.entity.domain.UserEntity;
 import com.motorbikebe.repository.business.admin.BranchRepository;
+import com.motorbikebe.repository.business.admin.CarRepository;
+import com.motorbikebe.repository.business.admin.ContractRepository;
+import com.motorbikebe.repository.business.admin.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +36,9 @@ import java.util.stream.Collectors;
 public class BranchMngServiceImpl implements BranchMngService {
 
     private final BranchRepository branchRepository;
+    private final CarRepository carRepository;
+    private final UserRepository userRepository;
+    private final ContractRepository contractRepository;
     private final ModelMapper modelMapper;
     private final CommonService commonService;
 
@@ -48,7 +55,7 @@ public class BranchMngServiceImpl implements BranchMngService {
         if (!branchEntity.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
-        
+
         return modelMapper.map(branchEntity.get(), BranchDTO.class);
     }
 
@@ -85,7 +92,25 @@ public class BranchMngServiceImpl implements BranchMngService {
         if (!branchEntity.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
-        
+
+        // Kiểm tra xem chi nhánh có xe không
+        List<com.motorbikebe.entity.domain.CarEntity> cars = carRepository.findByBranchId(id);
+        if (cars != null && !cars.isEmpty()) {
+            throw new RestApiException(ApiStatus.CANNOT_DELETE_BRANCH_HAS_RELATIONS);
+        }
+
+        // Kiểm tra xem chi nhánh có nhân viên không
+        List<UserEntity> users = userRepository.findByBranchId(id);
+        if (users != null && !users.isEmpty()) {
+            throw new RestApiException(ApiStatus.CANNOT_DELETE_BRANCH_HAS_RELATIONS);
+        }
+
+        // Kiểm tra xem chi nhánh có được dùng trong hợp đồng không
+        boolean hasContracts = contractRepository.existsByPickupBranchIdOrReturnBranchId(id);
+        if (hasContracts) {
+            throw new RestApiException(ApiStatus.CANNOT_DELETE_BRANCH_HAS_RELATIONS);
+        }
+
         branchRepository.deleteById(id);
         return true;
     }

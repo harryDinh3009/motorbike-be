@@ -88,6 +88,7 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
                     .setMarginBottom(10));
 
             SimpleDateFormat dateTimeFormat = new SimpleDateFormat("HH:mm dd/MM/yyyy");
+            dateTimeFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
 
             Table infoTable = new Table(UnitValue.createPercentArray(new float[]{1, 1})).useAllAvailableWidth();
             infoTable.addCell(makeBorderlessCell("Họ tên người thuê: " + defaultString(contract.getCustomerName()), font));
@@ -189,6 +190,10 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
     private String formatDate(java.util.Date date, SimpleDateFormat format) {
         if (date == null) {
             return "";
+        }
+        // Đảm bảo timezone đã được set trước khi format
+        if (format.getTimeZone() == null || format.getTimeZone().getID().equals("GMT")) {
+            format.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
         }
         return format.format(date);
     }

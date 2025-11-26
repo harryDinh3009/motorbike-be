@@ -12,6 +12,7 @@ import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
 import com.motorbikebe.dto.common.userCurrent.UserCurrentInfoDTO;
 import com.motorbikebe.entity.domain.CarEntity;
 import com.motorbikebe.repository.business.admin.CarRepository;
+import com.motorbikebe.repository.business.admin.ContractCarRepository;
 import com.motorbikebe.util.CloudinaryUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 public class CarMngServiceImpl implements CarMngService {
 
     private final CarRepository carRepository;
+    private final ContractCarRepository contractCarRepository;
     private final CloudinaryUploadImages cloudinaryUploadImages;
     private final ModelMapper modelMapper;
     private final CommonService commonService;
@@ -43,14 +45,14 @@ public class CarMngServiceImpl implements CarMngService {
     public PageableObject<CarDTO> searchCars(CarSearchDTO searchDTO) {
         Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
         Page<CarDTO> carPage = carRepository.searchCars(pageable, searchDTO);
-        
+
         // Set status name
         carPage.getContent().forEach(car -> {
             if (car.getStatus() != null) {
                 car.setStatusNm(car.getStatus().getDescription());
             }
         });
-        
+
         return new PageableObject<>(carPage);
     }
 
@@ -60,12 +62,12 @@ public class CarMngServiceImpl implements CarMngService {
         if (!carEntity.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
-        
+
         CarDTO carDTO = modelMapper.map(carEntity.get(), CarDTO.class);
         if (carDTO.getStatus() != null) {
             carDTO.setStatusNm(carDTO.getStatus().getDescription());
         }
-        
+
         return carDTO;
     }
 
@@ -96,7 +98,7 @@ public class CarMngServiceImpl implements CarMngService {
         carEntity.setStatus(saveDTO.getStatus());
         carEntity.setImageUrl(saveDTO.getImageUrl());
         carEntity.setNote(saveDTO.getNote());
-        
+
         // Thông tin bổ sung
         carEntity.setYearOfManufacture(saveDTO.getYearOfManufacture());
         carEntity.setOrigin(saveDTO.getOrigin());
@@ -121,7 +123,13 @@ public class CarMngServiceImpl implements CarMngService {
         if (!carEntity.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
-        
+
+        // Kiểm tra xem xe có trong hợp đồng nào không
+        boolean hasContracts = contractCarRepository.existsByCarId(id);
+        if (hasContracts) {
+            throw new RestApiException(ApiStatus.CANNOT_DELETE_CAR_HAS_CONTRACTS);
+        }
+
         carRepository.deleteById(id);
         return true;
     }
@@ -161,7 +169,7 @@ public class CarMngServiceImpl implements CarMngService {
 
         // Upload ảnh mới
         String imageUrl = cloudinaryUploadImages.uploadImage(file, "car-images");
-        
+
         // Cập nhật URL vào database
         carEntity.get().setImageUrl(imageUrl);
         carRepository.save(carEntity.get());

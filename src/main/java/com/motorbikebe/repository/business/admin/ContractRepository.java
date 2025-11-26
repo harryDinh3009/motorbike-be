@@ -3,6 +3,7 @@ package com.motorbikebe.repository.business.admin;
 import com.motorbikebe.constant.enumconstant.ContractStatus;
 import com.motorbikebe.dto.business.admin.contractMng.ContractDTO;
 import com.motorbikebe.dto.business.admin.contractMng.ContractSearchDTO;
+import com.motorbikebe.dto.business.admin.contractMng.MonthlyRevenueRowDTO;
 import com.motorbikebe.entity.domain.ContractEntity;
 import com.motorbikebe.repository.projection.ContractRevenueProjection;
 import com.motorbikebe.repository.projection.DailyRevenueProjection;
@@ -69,6 +70,8 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
             AND (:#{#req.source} IS NULL OR :#{#req.source} = '' OR con.source = :#{#req.source})
             AND (:#{#req.startDateFrom} IS NULL OR con.start_date >= :#{#req.startDateFrom})
             AND (:#{#req.startDateTo} IS NULL OR con.start_date <= :#{#req.startDateTo})
+            AND (:#{#req.endDateFrom} IS NULL OR con.end_date >= :#{#req.endDateFrom})
+            AND (:#{#req.endDateTo} IS NULL OR con.end_date <= :#{#req.endDateTo})
             AND (:#{#req.pickupBranchId} IS NULL OR :#{#req.pickupBranchId} = '' OR con.pickup_branch_id = :#{#req.pickupBranchId})
             AND (:#{#req.returnBranchId} IS NULL OR :#{#req.returnBranchId} = '' OR con.return_branch_id = :#{#req.returnBranchId})
             ORDER BY con.created_date DESC
@@ -90,6 +93,8 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
             AND (:#{#req.source} IS NULL OR :#{#req.source} = '' OR con.source = :#{#req.source})
             AND (:#{#req.startDateFrom} IS NULL OR con.start_date >= :#{#req.startDateFrom})
             AND (:#{#req.startDateTo} IS NULL OR con.start_date <= :#{#req.startDateTo})
+            AND (:#{#req.endDateFrom} IS NULL OR con.end_date >= :#{#req.endDateFrom})
+            AND (:#{#req.endDateTo} IS NULL OR con.end_date <= :#{#req.endDateTo})
             AND (:#{#req.pickupBranchId} IS NULL OR :#{#req.pickupBranchId} = '' OR con.pickup_branch_id = :#{#req.pickupBranchId})
             AND (:#{#req.returnBranchId} IS NULL OR :#{#req.returnBranchId} = '' OR con.return_branch_id = :#{#req.returnBranchId})
             """, nativeQuery = true)
@@ -99,6 +104,28 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
      * Tìm hợp đồng theo khách hàng
      */
     List<ContractEntity> findByCustomerId(String customerId);
+
+    /**
+     * Kiểm tra có hợp đồng nào dùng branch làm pickup hoặc return branch không
+     */
+    @Query(value = """
+            SELECT EXISTS(
+                SELECT 1 FROM contract con
+                WHERE (con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+            )
+            """, nativeQuery = true)
+    boolean existsByPickupBranchIdOrReturnBranchId(@Param("branchId") String branchId);
+
+    /**
+     * Kiểm tra có hợp đồng nào dùng user làm delivery hoặc return user không
+     */
+    @Query(value = """
+            SELECT EXISTS(
+                SELECT 1 FROM contract con
+                WHERE (con.delivery_user_id = :userId OR con.return_user_id = :userId)
+            )
+            """, nativeQuery = true)
+    boolean existsByDeliveryUserIdOrReturnUserId(@Param("userId") String userId);
 
     /**
      * Tìm hợp đồng theo trạng thái
@@ -171,6 +198,22 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
     List<DailyRevenueProjection> sumDailyRevenueByBranchAndDate(@Param("branchId") String branchId,
                                                                 @Param("startDate") Date startDate,
                                                                 @Param("endDate") Date endDate);
+
+    @Query(value = """
+            SELECT 
+                MONTH(con.start_date) AS month,
+                COALESCE(SUM(con.total_rental_amount), 0) AS rentalAmount,
+                COALESCE(SUM(con.total_surcharge), 0) AS surchargeAmount,
+                COALESCE(SUM(con.discount_amount), 0) AS discountAmount
+            FROM contract con
+            WHERE YEAR(con.start_date) = :year
+              AND con.status <> 'CANCELLED'
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+            GROUP BY MONTH(con.start_date)
+            ORDER BY month
+            """, nativeQuery = true)
+    List<Object[]> sumMonthlyRevenue(@Param("year") int year, @Param("branchId") String branchId);
+
 }
 
 

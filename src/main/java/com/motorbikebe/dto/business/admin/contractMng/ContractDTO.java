@@ -26,6 +26,11 @@ public class ContractDTO {
     private String email; // Email khách
     private String country; // Quốc tịch khách (nếu có)
     private String citizenId; // CCCD/Hộ chiếu khách
+    private String customerAddress; // Địa chỉ thường trú của khách
+    @JsonFormat(pattern = "dd/MM/yyyy", timezone = "GMT+07:00")
+    private Date customerDateOfBirth; // Ngày sinh của khách
+    @JsonFormat(pattern = "dd/MM/yyyy", timezone = "GMT+07:00")
+    private Date citizenIdIssuedDate; // Ngày cấp CCCD/CMND (nếu có)
     private Integer totalContracts; // Số hợp đồng thuê
     
     // Contract Info
@@ -62,10 +67,13 @@ public class ContractDTO {
     // Delivery & Return Info
     private String deliveryUserId; // ID nhân viên giao xe
     private String deliveryUserName; // Tên nhân viên giao xe
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+07:00")
     private Date deliveryTime; // Thời gian giao xe thực tế
     private String returnUserId; // ID nhân viên nhận xe
     private String returnUserName; // Tên nhân viên nhận xe
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+07:00")
     private Date returnTime; // Thời gian nhận xe thực tế
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+07:00")
     private Date completedDate; // Ngày hoàn tất hợp đồng
     
     // Relationships (load khi cần)

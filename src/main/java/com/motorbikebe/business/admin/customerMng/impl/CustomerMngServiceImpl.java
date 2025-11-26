@@ -9,6 +9,7 @@ import com.motorbikebe.dto.business.admin.customerMng.CustomerDTO;
 import com.motorbikebe.dto.business.admin.customerMng.CustomerSaveDTO;
 import com.motorbikebe.dto.business.admin.customerMng.CustomerSearchDTO;
 import com.motorbikebe.entity.domain.CustomerEntity;
+import com.motorbikebe.repository.business.admin.ContractRepository;
 import com.motorbikebe.repository.business.admin.CustomerRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 public class CustomerMngServiceImpl implements CustomerMngService {
 
     private final CustomerRepository customerRepository;
+    private final ContractRepository contractRepository;
     private final CloudinaryUploadImages cloudinaryUploadImages;
     private final ModelMapper modelMapper;
 
@@ -49,7 +51,7 @@ public class CustomerMngServiceImpl implements CustomerMngService {
         if (!customerEntity.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
-        
+
         return modelMapper.map(customerEntity.get(), CustomerDTO.class);
     }
 
@@ -97,7 +99,13 @@ public class CustomerMngServiceImpl implements CustomerMngService {
         if (!customerEntity.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
-        
+
+        // Kiểm tra xem khách hàng có hợp đồng nào không
+        List<com.motorbikebe.entity.domain.ContractEntity> contracts = contractRepository.findByCustomerId(id);
+        if (contracts != null && !contracts.isEmpty()) {
+            throw new RestApiException(ApiStatus.CANNOT_DELETE_CUSTOMER_HAS_CONTRACTS);
+        }
+
         customerRepository.deleteById(id);
         return true;
     }
@@ -153,7 +161,7 @@ public class CustomerMngServiceImpl implements CustomerMngService {
         }
 
         String imageUrl = cloudinaryUploadImages.uploadImage(file, "customer/driver_license");
-        
+
         CustomerEntity customer = customerEntity.get();
         customer.setDriverLicenseImageUrl(imageUrl);
         customerRepository.save(customer);
@@ -170,7 +178,7 @@ public class CustomerMngServiceImpl implements CustomerMngService {
         }
 
         String imageUrl = cloudinaryUploadImages.uploadImage(file, "customer/passport");
-        
+
         CustomerEntity customer = customerEntity.get();
         customer.setPassportImageUrl(imageUrl);
         customerRepository.save(customer);

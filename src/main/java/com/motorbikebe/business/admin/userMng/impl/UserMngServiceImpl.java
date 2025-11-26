@@ -15,6 +15,7 @@ import com.motorbikebe.dto.business.admin.userMng.UserMngSearchDTO;
 import com.motorbikebe.entity.domain.UserEntity;
 import com.motorbikebe.entity.system.RoleEntity;
 import com.motorbikebe.entity.system.UserRoleEntity;
+import com.motorbikebe.repository.business.admin.ContractRepository;
 import com.motorbikebe.repository.business.admin.UserRepository;
 import com.motorbikebe.repository.system.RoleRepository;
 import com.motorbikebe.repository.system.UserRoleRepository;
@@ -42,11 +43,9 @@ import java.util.Optional;
 public class UserMngServiceImpl implements UserMngService {
 
     private final UserRepository userRepository;
-
+    private final ContractRepository contractRepository;
     private final ModelMapper modelMapper;
-
     private final RoleRepository roleRepository;
-
     private final UserRoleRepository userRoleRepository;
 
     private final PasswordEncoder passwordEncoder;
@@ -213,6 +212,13 @@ public class UserMngServiceImpl implements UserMngService {
         Optional<UserEntity> userEntityFind = userRepository.findById(id);
         if (!userEntityFind.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+        
+        // Kiểm tra xem nhân viên có được ghi nhận là người giao/nhận xe trong hợp đồng không
+        // Cần inject ContractRepository
+        boolean hasContracts = contractRepository.existsByDeliveryUserIdOrReturnUserId(id);
+        if (hasContracts) {
+            throw new RestApiException(ApiStatus.CANNOT_DELETE_USER_HAS_CONTRACTS);
         }
         
         // Delete all user roles first using native query (safe and efficient)

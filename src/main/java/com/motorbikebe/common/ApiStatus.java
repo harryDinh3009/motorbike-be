@@ -70,6 +70,13 @@ public enum ApiStatus {
     // 422 Unprocessable Entity
     UNPROCESSABLE_ENTITY(HttpStatus.UNPROCESSABLE_ENTITY, "422001", "Unable to process the provided data."),
 
+    // Delete validation errors
+    CANNOT_DELETE_CUSTOMER_HAS_CONTRACTS(HttpStatus.BAD_REQUEST, "400026", "Không thể xóa vì khách hàng này đã có hợp đồng thuê xe."),
+    CANNOT_DELETE_BRANCH_HAS_RELATIONS(HttpStatus.BAD_REQUEST, "400027", "Không thể xóa vì chi nhánh này có xe, nhân viên hoặc hợp đồng thuê xe."),
+    CANNOT_DELETE_CAR_HAS_CONTRACTS(HttpStatus.BAD_REQUEST, "400028", "Không thể xóa vì xe này đã được sử dụng trong hợp đồng thuê xe."),
+    CANNOT_DELETE_CAR_MODEL_HAS_CARS(HttpStatus.BAD_REQUEST, "400029", "Không thể xóa vì mẫu xe này đang được gán cho xe trong hệ thống."),
+    CANNOT_DELETE_USER_HAS_CONTRACTS(HttpStatus.BAD_REQUEST, "400030", "Không thể xóa vì nhân viên này đã được phân công trong hợp đồng thuê xe."),
+
     // ===== 5xx: Server Errors =====
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500001", "An unexpected server error occurred."),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "500002", "Bad request");

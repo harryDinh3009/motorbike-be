@@ -2,6 +2,8 @@ package com.motorbikebe.business.admin.contractMng.web;
 
 import com.motorbikebe.business.admin.contractMng.excel.ContractExcelService;
 import com.motorbikebe.business.admin.contractMng.service.ContractMngService;
+import com.motorbikebe.business.admin.contractMng.service.ContractReceiptService;
+import com.motorbikebe.business.admin.contractMng.service.ContractReportService;
 import com.motorbikebe.common.ApiResponse;
 import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.common.PageableObject;
@@ -34,6 +36,8 @@ public class ContractMngController {
 
     private final ContractMngService contractMngService;
     private final ContractExcelService contractExcelService;
+    private final ContractReceiptService contractReceiptService;
+    private final ContractReportService contractReportService;
 
     // ========== CRUD Operations ==========
 
@@ -65,11 +69,11 @@ public class ContractMngController {
     }
 
     /**
-     * Xóa hợp đồng
+     * Hủy hợp đồng (chuyển status thành CANCELLED)
      */
-    @DeleteMapping("/delete/{id}")
-    public ApiResponse<Boolean> deleteContract(@PathVariable String id) {
-        Boolean response = contractMngService.deleteContract(id);
+    @PutMapping("/cancel/{id}")
+    public ApiResponse<Boolean> cancelContract(@PathVariable String id) {
+        Boolean response = contractMngService.cancelContract(id);
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }
 
@@ -304,5 +308,39 @@ public class ContractMngController {
                 })
                 .collect(Collectors.toList());
         return new ApiResponse<>(ApiStatus.SUCCESS, statuses);
+    }
+
+    /**
+     * Export biên nhận trả xe
+     */
+    @PostMapping("/receipt/export")
+    public ResponseEntity<byte[]> exportContractReceipt(@RequestBody ContractReceiptRequestDTO requestDTO) {
+        byte[] pdfBytes = contractReceiptService.exportReceipt(requestDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment",
+                "bien-nhan-hop-dong-" + (requestDTO.getContractId() != null ? requestDTO.getContractId() : "") + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    /**
+     * Export báo cáo doanh thu theo tháng
+     */
+    @PostMapping("/revenue/monthly-report")
+    public ResponseEntity<byte[]> exportMonthlyRevenueReport(@RequestBody MonthlyRevenueReportRequestDTO requestDTO) {
+        byte[] pdfBytes = contractReportService.exportMonthlyRevenueReport(requestDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment",
+                "Bao_Cao_Doanh_Thu_" + requestDTO.getYear() + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
     }
 }
