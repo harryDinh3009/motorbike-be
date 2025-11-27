@@ -17,5 +17,6 @@ public class DashboardResponseDTO {
     private DashboardPerformanceDTO performance;          // Các chỉ số hiệu suất tổng quan
     private DashboardRevenueOverviewDTO revenueOverview;  // Khối doanh thu hôm nay/tháng này/tháng trước
     private List<DashboardDailyRevenueDTO> dailyRevenue;  // Dữ liệu biểu đồ doanh thu theo ngày
+    private List<DashboardTopCarDTO> topCars;            // Top 5 xe được thuê nhiều nhất
 }
 

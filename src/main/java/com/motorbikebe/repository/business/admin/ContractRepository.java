@@ -7,6 +7,7 @@ import com.motorbikebe.dto.business.admin.contractMng.MonthlyRevenueRowDTO;
 import com.motorbikebe.entity.domain.ContractEntity;
 import com.motorbikebe.repository.projection.ContractRevenueProjection;
 import com.motorbikebe.repository.projection.DailyRevenueProjection;
+import com.motorbikebe.repository.projection.TopCarRentalProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -109,23 +110,21 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
      * Kiểm tra có hợp đồng nào dùng branch làm pickup hoặc return branch không
      */
     @Query(value = """
-            SELECT EXISTS(
-                SELECT 1 FROM contract con
-                WHERE (con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
-            )
+            SELECT COUNT(con.id)
+            FROM contract con
+            WHERE (con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
             """, nativeQuery = true)
-    boolean existsByPickupBranchIdOrReturnBranchId(@Param("branchId") String branchId);
+    Long existsByPickupBranchIdOrReturnBranchId(@Param("branchId") String branchId);
 
     /**
      * Kiểm tra có hợp đồng nào dùng user làm delivery hoặc return user không
      */
     @Query(value = """
-            SELECT EXISTS(
-                SELECT 1 FROM contract con
-                WHERE (con.delivery_user_id = :userId OR con.return_user_id = :userId)
-            )
+            SELECT COUNT(con.id)
+            FROM contract con
+            WHERE (con.delivery_user_id = :userId OR con.return_user_id = :userId)
             """, nativeQuery = true)
-    boolean existsByDeliveryUserIdOrReturnUserId(@Param("userId") String userId);
+    Long existsByDeliveryUserIdOrReturnUserId(@Param("userId") String userId);
 
     /**
      * Tìm hợp đồng theo trạng thái
@@ -213,6 +212,25 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
             ORDER BY month
             """, nativeQuery = true)
     List<Object[]> sumMonthlyRevenue(@Param("year") int year, @Param("branchId") String branchId);
+
+    /**
+     * Lấy top 5 xe được thuê nhiều nhất
+     */
+    @Query(value = """
+            SELECT 
+                c.model AS model,
+                COUNT(DISTINCT con.id) AS rentalCount,
+                COALESCE(SUM(con.final_amount), 0) AS revenue
+            FROM contract_car cc
+            INNER JOIN contract con ON cc.contract_id = con.id
+            INNER JOIN car c ON cc.car_id = c.id
+            WHERE con.status <> 'CANCELLED'
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+            GROUP BY c.model
+            ORDER BY rentalCount DESC, revenue DESC
+            LIMIT 5
+            """, nativeQuery = true)
+    List<TopCarRentalProjection> findTop5RentedCars(@Param("branchId") String branchId);
 
 }
 

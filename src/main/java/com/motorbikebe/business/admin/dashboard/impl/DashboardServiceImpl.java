@@ -6,6 +6,7 @@ import com.motorbikebe.repository.business.admin.CarRepository;
 import com.motorbikebe.repository.business.admin.ContractRepository;
 import com.motorbikebe.repository.projection.ContractRevenueProjection;
 import com.motorbikebe.repository.projection.DailyRevenueProjection;
+import com.motorbikebe.repository.projection.TopCarRentalProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -63,10 +65,16 @@ public class DashboardServiceImpl implements DashboardService {
                 .map(this::toDailyRevenueDTO)
                 .collect(Collectors.toList());
 
+        List<TopCarRentalProjection> topCarProjections = contractRepository.findTop5RentedCars(branchId);
+        List<DashboardTopCarDTO> topCars = IntStream.range(0, topCarProjections.size())
+                .mapToObj(i -> toTopCarDTO(topCarProjections.get(i), i + 1))
+                .collect(Collectors.toList());
+
         return DashboardResponseDTO.builder()
                 .performance(performance)
                 .revenueOverview(overview)
                 .dailyRevenue(daily)
+                .topCars(topCars)
                 .build();
     }
 
@@ -122,6 +130,19 @@ public class DashboardServiceImpl implements DashboardService {
 
     private BigDecimal defaultBigDecimal(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private DashboardTopCarDTO toTopCarDTO(TopCarRentalProjection projection, int rank) {
+        if (projection == null) {
+            return null;
+        }
+
+        return DashboardTopCarDTO.builder()
+                .rank(rank)
+                .model(projection.getModel())
+                .rentalCount(projection.getRentalCount() != null ? projection.getRentalCount() : 0L)
+                .revenue(defaultBigDecimal(projection.getRevenue()))
+                .build();
     }
 }
 

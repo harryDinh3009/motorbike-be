@@ -90,13 +90,19 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
             SimpleDateFormat dateTimeFormat = new SimpleDateFormat("HH:mm dd/MM/yyyy");
             dateTimeFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
 
+            // Trừ 7 giờ cho thời gian thuê và trả xe
+            java.util.Date adjustedStartDate = contract.getStartDate() != null ? 
+                new java.util.Date(contract.getStartDate().getTime() - 7 * 60 * 60 * 1000) : null;
+            java.util.Date adjustedEndDate = contract.getEndDate() != null ? 
+                new java.util.Date(contract.getEndDate().getTime() - 7 * 60 * 60 * 1000) : null;
+
             Table infoTable = new Table(UnitValue.createPercentArray(new float[]{1, 1})).useAllAvailableWidth();
             infoTable.addCell(makeBorderlessCell("Họ tên người thuê: " + defaultString(contract.getCustomerName()), font));
             infoTable.addCell(makeBorderlessCell("Mã hợp đồng: " + defaultString(contract.getContractCode()), font));
             infoTable.addCell(makeBorderlessCell("SĐT: " + defaultString(contract.getPhoneNumber()), font));
-            infoTable.addCell(makeBorderlessCell("Thuê lúc: " + formatDate(contract.getStartDate(), dateTimeFormat), font));
+            infoTable.addCell(makeBorderlessCell("Thuê lúc: " + formatDate(adjustedStartDate, dateTimeFormat), font));
             infoTable.addCell(makeBorderlessCell("CMND/CCCD: " + defaultString(contract.getCitizenId()), font));
-            infoTable.addCell(makeBorderlessCell("Trả lúc: " + formatDate(contract.getEndDate(), dateTimeFormat), font));
+            infoTable.addCell(makeBorderlessCell("Trả lúc: " + formatDate(adjustedEndDate, dateTimeFormat), font));
             document.add(infoTable);
 
             document.add(new Paragraph("\nXE THUÊ").setFont(fontBold).setFontSize(12));

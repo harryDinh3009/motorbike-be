@@ -77,11 +77,11 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
      * Kiểm tra có xe nào dùng model này không
      */
     @Query(value = """
-            SELECT EXISTS(
-                SELECT 1 FROM car c WHERE c.model = :modelName
-            )
+            SELECT COUNT(c.id)
+            FROM car c
+            WHERE c.model = :modelName
             """, nativeQuery = true)
-    boolean existsByModel(@Param("modelName") String modelName);
+    Long existsByModel(@Param("modelName") String modelName);
 
     @Query(value = """
             SELECT COUNT(c.id)

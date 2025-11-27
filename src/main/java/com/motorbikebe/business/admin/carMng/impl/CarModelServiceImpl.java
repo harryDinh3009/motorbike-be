@@ -93,8 +93,8 @@ public class CarModelServiceImpl implements CarModelService {
                 .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
         
         // Kiểm tra xem có xe nào đang dùng mẫu xe này không
-        boolean hasCars = carRepository.existsByModel(entity.getName());
-        if (hasCars) {
+        Long count = carRepository.existsByModel(entity.getName());
+        if (count != null && count > 0) {
             throw new RestApiException(ApiStatus.CANNOT_DELETE_CAR_MODEL_HAS_CARS);
         }
         

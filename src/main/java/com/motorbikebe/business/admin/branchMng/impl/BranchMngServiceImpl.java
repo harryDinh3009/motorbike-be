@@ -106,8 +106,8 @@ public class BranchMngServiceImpl implements BranchMngService {
         }
 
         // Kiểm tra xem chi nhánh có được dùng trong hợp đồng không
-        boolean hasContracts = contractRepository.existsByPickupBranchIdOrReturnBranchId(id);
-        if (hasContracts) {
+        Long count = contractRepository.existsByPickupBranchIdOrReturnBranchId(id);
+        if (count != null && count > 0) {
             throw new RestApiException(ApiStatus.CANNOT_DELETE_BRANCH_HAS_RELATIONS);
         }
 

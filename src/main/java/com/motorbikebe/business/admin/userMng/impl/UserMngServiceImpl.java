@@ -216,8 +216,8 @@ public class UserMngServiceImpl implements UserMngService {
         
         // Kiểm tra xem nhân viên có được ghi nhận là người giao/nhận xe trong hợp đồng không
         // Cần inject ContractRepository
-        boolean hasContracts = contractRepository.existsByDeliveryUserIdOrReturnUserId(id);
-        if (hasContracts) {
+        Long count = contractRepository.existsByDeliveryUserIdOrReturnUserId(id);
+        if (count != null && count > 0) {
             throw new RestApiException(ApiStatus.CANNOT_DELETE_USER_HAS_CONTRACTS);
         }
         

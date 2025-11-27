@@ -867,8 +867,14 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setFontSize(11)
                     .setMarginBottom(3));
 
-            String startDateStr = formatDateValue(contract.getStartDate(), "dd/MM/yyyy HH:mm", "[Ngày thuê]", "GMT+7");
-            String endDateStr = formatDateValue(contract.getEndDate(), "dd/MM/yyyy HH:mm", "[Ngày trả]", "GMT+7");
+            // Trừ 7 giờ cho thời gian thuê và trả xe
+            Date adjustedStartDate = contract.getStartDate() != null ? 
+                new Date(contract.getStartDate().getTime() - 7 * 60 * 60 * 1000) : null;
+            Date adjustedEndDate = contract.getEndDate() != null ? 
+                new Date(contract.getEndDate().getTime() - 7 * 60 * 60 * 1000) : null;
+            
+            String startDateStr = formatDateValue(adjustedStartDate, "dd/MM/yyyy HH:mm", "[Ngày thuê]", "GMT+7");
+            String endDateStr = formatDateValue(adjustedEndDate, "dd/MM/yyyy HH:mm", "[Ngày trả]", "GMT+7");
 
             document.add(new Paragraph("Thời gian thuê: " + startDateStr + " đến " + endDateStr)
                     .setFont(font)
