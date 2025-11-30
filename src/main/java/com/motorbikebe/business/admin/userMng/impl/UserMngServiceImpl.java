@@ -15,10 +15,12 @@ import com.motorbikebe.dto.business.admin.userMng.UserMngSearchDTO;
 import com.motorbikebe.entity.domain.UserEntity;
 import com.motorbikebe.entity.system.RoleEntity;
 import com.motorbikebe.entity.system.UserRoleEntity;
+import com.motorbikebe.repository.business.admin.BranchRepository;
 import com.motorbikebe.repository.business.admin.ContractRepository;
 import com.motorbikebe.repository.business.admin.UserRepository;
 import com.motorbikebe.repository.system.RoleRepository;
 import com.motorbikebe.repository.system.UserRoleRepository;
+import com.motorbikebe.entity.domain.BranchEntity;
 import com.motorbikebe.util.Utils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ public class UserMngServiceImpl implements UserMngService {
     private final ModelMapper modelMapper;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final BranchRepository branchRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -163,41 +166,78 @@ public class UserMngServiceImpl implements UserMngService {
      * Detail User
      *
      * @param id .
-     * @return UserMngSaveDTO
+     * @return UserMngListDTO
      */
     @Override
-    public UserMngSaveDTO detailUser(String id) {
-        UserMngSaveDTO userMngSaveDTO = new UserMngSaveDTO();
+    public UserMngListDTO detailUser(String id) {
+        UserMngListDTO userMngListDTO = new UserMngListDTO();
 
         Optional<UserEntity> userEntityFind = userRepository.findById(id);
         if (!userEntityFind.isPresent()) {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
 
-        userMngSaveDTO.setId(userEntityFind.get().getId());
-        userMngSaveDTO.setUsername(userEntityFind.get().getUserName());
-        userMngSaveDTO.setEmail(userEntityFind.get().getEmail());
-        userMngSaveDTO.setFullName(userEntityFind.get().getFullName());
-        userMngSaveDTO.setGenderCd(userEntityFind.get().getGender());
-        userMngSaveDTO.setDateOfBirth(Utils.convertDateToString(userEntityFind.get().getDateOfBirth(), "yyyy-MM-dd"));
-        userMngSaveDTO.setPhoneNumber(userEntityFind.get().getPhoneNumber());
-        userMngSaveDTO.setAddress(userEntityFind.get().getAddress());
-        userMngSaveDTO.setBranchId(userEntityFind.get().getBranchId());
-        userMngSaveDTO.setStatusCd(userEntityFind.get().getStatus());
+        UserEntity user = userEntityFind.get();
+        userMngListDTO.setId(user.getId());
+        userMngListDTO.setUserName(user.getUserName());
+        userMngListDTO.setEmail(user.getEmail());
+        userMngListDTO.setFullName(user.getFullName());
+        userMngListDTO.setPhoneNumber(user.getPhoneNumber());
+        userMngListDTO.setAddress(user.getAddress());
+        userMngListDTO.setBranchId(user.getBranchId());
+        userMngListDTO.setAvatar(user.getAvatar());
 
-        UserRoleEntity userRoleEntity = userRoleRepository.findByUserId(userEntityFind.get().getId());
-        if (Objects.isNull(userRoleEntity)) {
-            throw new RestApiException(ApiStatus.NOT_FOUND);
+        // Map gender code to name
+        String genderCd = user.getGender();
+        if (genderCd != null) {
+            switch (genderCd) {
+                case "MALE":
+                    userMngListDTO.setGenderNm("Nam");
+                    break;
+                case "FEMALE":
+                    userMngListDTO.setGenderNm("Nữ");
+                    break;
+                case "OTHER":
+                    userMngListDTO.setGenderNm("Khác");
+                    break;
+                default:
+                    userMngListDTO.setGenderNm(genderCd);
+            }
         }
 
-        Optional<RoleEntity> roleEntityFind = roleRepository.findById(userRoleEntity.getRlId());
-        if (!roleEntityFind.isPresent()) {
-            throw new RestApiException(ApiStatus.NOT_FOUND);
+        // Map status code to name
+        String statusCd = user.getStatus();
+        if (statusCd != null) {
+            switch (statusCd) {
+                case "ACTIVE":
+                    userMngListDTO.setStatusNm("Đang làm");
+                    break;
+                case "INACTIVE":
+                    userMngListDTO.setStatusNm("Nghỉ");
+                    break;
+                default:
+                    userMngListDTO.setStatusNm(statusCd);
+            }
         }
 
-        userMngSaveDTO.setRoleCd(roleEntityFind.get().getRlCd());
+        // Get role name
+        UserRoleEntity userRoleEntity = userRoleRepository.findByUserId(user.getId());
+        if (userRoleEntity != null) {
+            Optional<RoleEntity> roleEntityFind = roleRepository.findById(userRoleEntity.getRlId());
+            if (roleEntityFind.isPresent()) {
+                userMngListDTO.setRoleNm(roleEntityFind.get().getRlNm());
+            }
+        }
 
-        return userMngSaveDTO;
+        // Get branch name
+        if (user.getBranchId() != null) {
+            Optional<BranchEntity> branchEntityFind = branchRepository.findById(user.getBranchId());
+            if (branchEntityFind.isPresent()) {
+                userMngListDTO.setBranchName(branchEntityFind.get().getName());
+            }
+        }
+
+        return userMngListDTO;
     }
 
     /**

@@ -3,13 +3,13 @@ package com.motorbikebe.dto.business.admin.carMng;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Getter
 @Setter
-public class AvailableCarReportRequestDTO {
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+public class RentableCarReportRequestDTO {
+    private Date startDate;
+    private Date endDate;
     private String branchId;
     private String modelName;
     private String carType;

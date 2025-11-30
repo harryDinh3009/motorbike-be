@@ -49,11 +49,11 @@ public class UserMngController {
      * Detail User
      *
      * @param id .
-     * @return UserMngSaveDTO
+     * @return UserMngListDTO
      */
     @GetMapping("/detail")
-    public ApiResponse<UserMngSaveDTO> detailUser(@RequestParam("id") String id) {
-        UserMngSaveDTO response = userMngService.detailUser(id);
+    public ApiResponse<UserMngListDTO> detailUser(@RequestParam("id") String id) {
+        UserMngListDTO response = userMngService.detailUser(id);
 
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }

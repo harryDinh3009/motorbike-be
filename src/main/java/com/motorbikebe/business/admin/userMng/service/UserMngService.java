@@ -30,9 +30,9 @@ public interface UserMngService {
      * Detail User
      *
      * @param id .
-     * @return UserMngSaveDTO
+     * @return UserMngListDTO
      */
-    UserMngSaveDTO detailUser(String id);
+    UserMngListDTO detailUser(String id);
     
     /**
      * Delete User

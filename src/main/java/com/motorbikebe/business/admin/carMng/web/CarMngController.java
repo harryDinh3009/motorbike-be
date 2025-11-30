@@ -273,6 +273,23 @@ public class CarMngController {
     }
 
     /**
+     * Export báo cáo xe có thể thuê (PDF)
+     * Sử dụng cùng logic như màn tạo hợp đồng - chọn xe
+     */
+    @PostMapping("/report/rentable-cars")
+    public ResponseEntity<byte[]> exportRentableCarsReport(@RequestBody RentableCarReportRequestDTO request) {
+        byte[] pdfBytes = carReportService.exportRentableCarsReport(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "Bao_Cao_Xe_Co_The_Thue.pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    /**
      * Export danh sách xe ra file Excel
      * Export các record tìm được theo điều kiện search
      *

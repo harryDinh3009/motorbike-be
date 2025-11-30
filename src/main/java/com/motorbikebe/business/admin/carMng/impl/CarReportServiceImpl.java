@@ -16,7 +16,13 @@ import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.config.exception.RestApiException;
 import com.motorbikebe.dto.business.admin.carMng.AvailableCarReportRequestDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarDTO;
+import com.motorbikebe.dto.business.admin.carMng.CarSearchAvailableDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
+import com.motorbikebe.dto.business.admin.carMng.RentableCarReportRequestDTO;
+import com.motorbikebe.constant.enumconstant.CarStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.motorbikebe.entity.domain.BranchEntity;
 import com.motorbikebe.repository.business.admin.BranchRepository;
 import com.motorbikebe.repository.business.admin.CarRepository;
@@ -31,9 +37,11 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +52,8 @@ public class CarReportServiceImpl implements CarReportService {
     private static final String STORE_ADDRESS = "Địa chỉ: Tổ 1, Thôn Cầu Mè, Phương Thiện, Hà Giang, Việt Nam";
     private static final String STORE_PHONE = "SDT: 0859963204";
 
+    private static final DateTimeFormatter REPORT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
     private final CarRepository carRepository;
     private final BranchRepository branchRepository;
 
@@ -53,14 +63,14 @@ public class CarReportServiceImpl implements CarReportService {
             throw new RestApiException(ApiStatus.BAD_REQUEST);
         }
 
-        CarSearchDTO searchDTO = new CarSearchDTO();
+        CarSearchAvailableDTO searchDTO = new CarSearchAvailableDTO();
         searchDTO.setStartDate(request.getStartDate());
         searchDTO.setEndDate(request.getEndDate());
         searchDTO.setBranchId(request.getBranchId());
         searchDTO.setModelName(request.getModelName());
         searchDTO.setCarType(request.getCarType());
 
-        List<CarDTO> availableCars = carRepository.findAvailableCarsForReport(searchDTO);
+        List<CarDTO> availableCars = carRepository.findAvailableCarsForReportAvailable(searchDTO);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(baos);
@@ -94,11 +104,9 @@ public class CarReportServiceImpl implements CarReportService {
                     .setTextAlignment(TextAlignment.CENTER)
                     .setMarginBottom(5));
 
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
             String dateRange = String.format("Từ ngày %s tới ngày %s",
-                    dateFormat.format(request.getStartDate()),
-                    dateFormat.format(request.getEndDate()));
+                    request.getStartDate().format(REPORT_DATE_TIME_FORMATTER),
+                    request.getEndDate().format(REPORT_DATE_TIME_FORMATTER));
             document.add(new Paragraph(dateRange)
                     .setFont(font)
                     .setFontSize(11)
@@ -199,6 +207,136 @@ public class CarReportServiceImpl implements CarReportService {
             return "";
         }
         return format.format(value);
+    }
+
+    @Override
+    public byte[] exportRentableCarsReport(RentableCarReportRequestDTO request) {
+        if (request.getStartDate() == null || request.getEndDate() == null) {
+            throw new RestApiException(ApiStatus.BAD_REQUEST);
+        }
+
+        // Use CarSearchDTO with Date (same as contract modal)
+        CarSearchDTO searchDTO = new CarSearchDTO();
+        searchDTO.setStartDate(request.getStartDate());
+        searchDTO.setEndDate(request.getEndDate());
+        searchDTO.setBranchId(request.getBranchId());
+        searchDTO.setModelName(request.getModelName());
+        searchDTO.setCarType(request.getCarType());
+
+        // Get all cars using searchAvailableCars (same logic as contract modal)
+        Pageable pageable = PageRequest.of(0, 10000);
+        Page<CarDTO> carPage = carRepository.searchAvailableCars(pageable, searchDTO);
+        
+        // Filter only AVAILABLE cars (not struck through in contract modal)
+        List<CarDTO> rentableCars = carPage.getContent().stream()
+                .filter(car -> car.getStatus() == CarStatus.AVAILABLE)
+                .collect(Collectors.toList());
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf, PageSize.A4.rotate());
+            document.setMargins(20, 30, 40, 30);
+
+            PdfFont font;
+            PdfFont fontBold;
+            try (InputStream fontStream = getClass().getClassLoader().getResourceAsStream("fonts/times.ttf");
+                 InputStream fontBoldStream = getClass().getClassLoader().getResourceAsStream("fonts/timesbd.ttf")) {
+                if (fontStream == null || fontBoldStream == null) {
+                    throw new FileNotFoundException("Font files not found in resources/fonts/");
+                }
+                font = PdfFontFactory.createFont(fontStream.readAllBytes(), com.itextpdf.io.font.PdfEncodings.IDENTITY_H);
+                fontBold = PdfFontFactory.createFont(fontBoldStream.readAllBytes(), com.itextpdf.io.font.PdfEncodings.IDENTITY_H);
+            }
+
+            // Header
+            document.add(new Paragraph("MOTOGO")
+                    .setFont(fontBold)
+                    .setFontSize(20)
+                    .setTextAlignment(TextAlignment.LEFT)
+                    .setMarginBottom(0));
+            document.add(new Paragraph(STORE_NAME).setFont(fontBold).setFontSize(12).setMarginTop(0).setMarginBottom(0));
+            document.add(new Paragraph(STORE_ADDRESS).setFont(font).setFontSize(11).setMarginTop(0).setMarginBottom(0));
+            document.add(new Paragraph(STORE_PHONE).setFont(font).setFontSize(11).setMarginTop(0).setMarginBottom(10));
+
+            // Title
+            document.add(new Paragraph("THỐNG KÊ XE KHẢ DỤNG")
+                    .setFont(fontBold)
+                    .setFontSize(18)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(5));
+
+            // Date range - use UTC timezone for display (FE sends local time string, parsed as UTC by Spring)
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            String dateRange = String.format("Từ ngày %s tới ngày %s",
+                    dateFormat.format(request.getStartDate()),
+                    dateFormat.format(request.getEndDate()));
+            document.add(new Paragraph(dateRange)
+                    .setFont(font)
+                    .setFontSize(11)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(5));
+
+            // Branch
+            String branchLabel = resolveBranchName(request.getBranchId());
+            document.add(new Paragraph("Chi nhánh: " + branchLabel)
+                    .setFont(font)
+                    .setFontSize(11)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(15));
+
+            // Table
+            float[] columnWidths = {40f, 120f, 110f, 150f, 100f, 110f, 90f, 90f};
+            Table table = new Table(columnWidths);
+            table.setWidth(UnitValue.createPercentValue(100));
+
+            addHeaderCell(table, "STT", font, fontBold);
+            addHeaderCell(table, "Mẫu xe", font, fontBold);
+            addHeaderCell(table, "Biển số", font, fontBold);
+            addHeaderCell(table, "Chi nhánh", font, fontBold);
+            addHeaderCell(table, "Loại xe", font, fontBold);
+            addHeaderCell(table, "Tình trạng", font, fontBold);
+            addHeaderCell(table, "Giá ngày", font, fontBold);
+            addHeaderCell(table, "Giá giờ", font, fontBold);
+
+            NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
+
+            if (rentableCars.isEmpty()) {
+                Cell emptyCell = new Cell(1, 8)
+                        .add(new Paragraph("Không có dữ liệu").setFont(font))
+                        .setTextAlignment(TextAlignment.CENTER);
+                table.addCell(emptyCell);
+            } else {
+                int index = 1;
+                for (CarDTO car : rentableCars) {
+                    table.addCell(createBodyCell(String.valueOf(index++), font));
+                    table.addCell(createBodyCell(defaultString(car.getModel()), font));
+                    table.addCell(createBodyCell(defaultString(car.getLicensePlate()), font));
+                    table.addCell(createBodyCell(defaultString(car.getBranchName()), font));
+                    table.addCell(createBodyCell(defaultString(car.getCarType()), font));
+                    table.addCell(createBodyCell(defaultString(car.getCondition()), font));
+                    table.addCell(createBodyCell(formatCurrency(car.getDailyPrice(), currencyFormat), font));
+                    table.addCell(createBodyCell(formatCurrency(car.getHourlyPrice(), currencyFormat), font));
+                }
+            }
+
+            document.add(table);
+
+            // Signature
+            document.add(new Paragraph("\n\n"));
+            Table signTable = new Table(new float[]{1, 1});
+            signTable.setWidth(UnitValue.createPercentValue(100));
+            signTable.addCell(createSignCell("Bên cho thuê\n(ký ghi rõ họ tên)", fontBold));
+            signTable.addCell(createSignCell("Người lập báo cáo\n(ký ghi rõ họ tên)", fontBold));
+            document.add(signTable);
+
+            document.close();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            log.error("Error exporting rentable car report", e);
+            throw new RestApiException(ApiStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
 
