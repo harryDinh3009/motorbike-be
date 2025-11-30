@@ -198,20 +198,48 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                                                                 @Param("startDate") Date startDate,
                                                                 @Param("endDate") Date endDate);
 
+    /**
+     * Thống kê doanh thu theo tháng (dựa theo ngày hoàn thành, status = COMPLETED)
+     */
     @Query(value = """
             SELECT 
-                MONTH(con.start_date) AS month,
+                MONTH(con.completed_date) AS month,
+                COUNT(con.id) AS contractCount,
                 COALESCE(SUM(con.total_rental_amount), 0) AS rentalAmount,
                 COALESCE(SUM(con.total_surcharge), 0) AS surchargeAmount,
                 COALESCE(SUM(con.discount_amount), 0) AS discountAmount
             FROM contract con
-            WHERE YEAR(con.start_date) = :year
-              AND con.status <> 'CANCELLED'
+            WHERE YEAR(con.completed_date) = :year
+              AND con.status = 'COMPLETED'
+              AND con.completed_date IS NOT NULL
               AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
-            GROUP BY MONTH(con.start_date)
+            GROUP BY MONTH(con.completed_date)
             ORDER BY month
             """, nativeQuery = true)
     List<Object[]> sumMonthlyRevenue(@Param("year") int year, @Param("branchId") String branchId);
+
+    /**
+     * Lấy doanh thu theo ngày hoàn thành (completed_date) với status = COMPLETED
+     */
+    @Query(value = """
+            SELECT 
+                DATE(con.completed_date) AS completedDate,
+                COUNT(con.id) AS contractCount,
+                COALESCE(SUM(con.total_rental_amount), 0) AS rentalAmount,
+                COALESCE(SUM(con.total_surcharge), 0) AS surchargeAmount,
+                COALESCE(SUM(con.discount_amount), 0) AS discountAmount
+            FROM contract con
+            WHERE con.status = 'COMPLETED'
+              AND con.completed_date IS NOT NULL
+              AND DATE(con.completed_date) >= DATE(:startDate)
+              AND DATE(con.completed_date) <= DATE(:endDate)
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+            GROUP BY DATE(con.completed_date)
+            ORDER BY completedDate
+            """, nativeQuery = true)
+    List<Object[]> sumDailyRevenueByCompletedDate(@Param("branchId") String branchId,
+                                                   @Param("startDate") Date startDate,
+                                                   @Param("endDate") Date endDate);
 
     /**
      * Lấy top 5 xe được thuê nhiều nhất
@@ -231,6 +259,41 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
             LIMIT 5
             """, nativeQuery = true)
     List<TopCarRentalProjection> findTop5RentedCars(@Param("branchId") String branchId);
+
+    /**
+     * Thống kê lượt thuê theo mẫu xe (dựa theo ngày hoàn thành, status = COMPLETED)
+     * Chỉ lấy mẫu xe đã được thuê trong khoảng thời gian
+     */
+    @Query(value = """
+            SELECT 
+                c.model AS modelName,
+                COUNT(cc.id) AS rentalCount,
+                COALESCE(SUM(cc.total_amount), 0) AS rentalAmount
+            FROM contract_car cc
+            INNER JOIN contract con ON cc.contract_id = con.id
+            INNER JOIN car c ON cc.car_id = c.id
+            WHERE con.status = 'COMPLETED'
+              AND con.completed_date IS NOT NULL
+              AND DATE(con.completed_date) >= DATE(:startDate)
+              AND DATE(con.completed_date) <= DATE(:endDate)
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+            GROUP BY c.model
+            ORDER BY rentalCount DESC, rentalAmount DESC
+            """, nativeQuery = true)
+    List<Object[]> sumRentalByModel(@Param("branchId") String branchId,
+                                     @Param("startDate") Date startDate,
+                                     @Param("endDate") Date endDate);
+
+    /**
+     * Lấy tất cả mẫu xe DISTINCT theo chi nhánh
+     */
+    @Query(value = """
+            SELECT DISTINCT c.model 
+            FROM car c 
+            WHERE (:branchId IS NULL OR :branchId = '' OR c.branch_id = :branchId)
+            ORDER BY c.model ASC
+            """, nativeQuery = true)
+    List<String> findAllDistinctModels(@Param("branchId") String branchId);
 
 }
 

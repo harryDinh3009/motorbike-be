@@ -328,7 +328,16 @@ public class ContractMngController {
     }
 
     /**
-     * Export báo cáo doanh thu theo tháng
+     * Lấy dữ liệu báo cáo doanh thu theo tháng
+     */
+    @PostMapping("/revenue/monthly-data")
+    public ApiResponse<List<MonthlyRevenueRowDTO>> getMonthlyRevenueData(@RequestBody MonthlyRevenueReportRequestDTO requestDTO) {
+        List<MonthlyRevenueRowDTO> data = contractReportService.getMonthlyRevenueData(requestDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, data);
+    }
+
+    /**
+     * Export báo cáo doanh thu theo tháng (PDF)
      */
     @PostMapping("/revenue/monthly-report")
     public ResponseEntity<byte[]> exportMonthlyRevenueReport(@RequestBody MonthlyRevenueReportRequestDTO requestDTO) {
@@ -337,7 +346,59 @@ public class ContractMngController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment",
-                "Bao_Cao_Doanh_Thu_" + requestDTO.getYear() + ".pdf");
+                "Bao_Cao_Doanh_Thu_Thang_" + requestDTO.getYear() + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    /**
+     * Lấy dữ liệu báo cáo doanh thu theo ngày
+     */
+    @PostMapping("/revenue/daily-data")
+    public ApiResponse<List<DailyRevenueRowDTO>> getDailyRevenueData(@RequestBody DailyRevenueReportRequestDTO requestDTO) {
+        List<DailyRevenueRowDTO> data = contractReportService.getDailyRevenueData(requestDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, data);
+    }
+
+    /**
+     * Export báo cáo doanh thu theo ngày (PDF)
+     */
+    @PostMapping("/revenue/daily-report")
+    public ResponseEntity<byte[]> exportDailyRevenueReport(@RequestBody DailyRevenueReportRequestDTO requestDTO) {
+        byte[] pdfBytes = contractReportService.exportDailyRevenueReport(requestDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment",
+                "Bao_Cao_Doanh_Thu_Theo_Ngay.pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    /**
+     * Lấy dữ liệu thống kê lượt thuê theo mẫu xe
+     */
+    @PostMapping("/rental/model-data")
+    public ApiResponse<List<ModelRentalRowDTO>> getModelRentalData(@RequestBody ModelRentalReportRequestDTO requestDTO) {
+        List<ModelRentalRowDTO> data = contractReportService.getModelRentalData(requestDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, data);
+    }
+
+    /**
+     * Export thống kê lượt thuê theo mẫu xe (PDF)
+     */
+    @PostMapping("/rental/model-report")
+    public ResponseEntity<byte[]> exportModelRentalReport(@RequestBody ModelRentalReportRequestDTO requestDTO) {
+        byte[] pdfBytes = contractReportService.exportModelRentalReport(requestDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment",
+                "Thong_Ke_Luot_Thue_Theo_Mau_Xe.pdf");
 
         return ResponseEntity.ok()
                 .headers(headers)
