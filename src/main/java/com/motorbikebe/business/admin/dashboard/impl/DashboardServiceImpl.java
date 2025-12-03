@@ -5,7 +5,6 @@ import com.motorbikebe.dto.business.admin.dashboard.*;
 import com.motorbikebe.repository.business.admin.CarRepository;
 import com.motorbikebe.repository.business.admin.ContractRepository;
 import com.motorbikebe.repository.projection.ContractRevenueProjection;
-import com.motorbikebe.repository.projection.DailyRevenueProjection;
 import com.motorbikebe.repository.projection.TopCarRentalProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,8 +12,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -45,7 +43,8 @@ public class DashboardServiceImpl implements DashboardService {
         long totalContracts = contractRepository.countContractsByBranchAndDate(
                 branchId, toDate(currentMonthStart), toDate(nextMonthStart));
 
-        long totalCars = carRepository.countActiveCarsByBranch(branchId);
+        long totalCars = contractRepository.countRentedCarsByBranchAndDate(
+                branchId, toDate(currentMonthStart), toDate(nextMonthStart));
 
         DashboardPerformanceDTO performance = DashboardPerformanceDTO.builder()
                 .totalContracts(totalContracts)
@@ -59,13 +58,13 @@ public class DashboardServiceImpl implements DashboardService {
                 .lastMonth(lastMonthRevenue)
                 .build();
 
-        List<DashboardDailyRevenueDTO> daily = contractRepository
-                .sumDailyRevenueByBranchAndDate(branchId, toDate(currentMonthStart), toDate(nextMonthStart))
-                .stream()
-                .map(this::toDailyRevenueDTO)
-                .collect(Collectors.toList());
+        // Sử dụng logic giống báo cáo doanh thu theo ngày (dựa theo completed_date và status = COMPLETED)
+        List<Object[]> rawDailyRevenue = contractRepository.sumDailyRevenueByCompletedDate(
+                branchId, toDate(currentMonthStart), toDate(nextMonthStart));
+        List<DashboardDailyRevenueDTO> daily = mapToDailyRevenueDTO(rawDailyRevenue, currentMonthStart, nextMonthStart);
 
-        List<TopCarRentalProjection> topCarProjections = contractRepository.findTop5RentedCars(branchId);
+        List<TopCarRentalProjection> topCarProjections = contractRepository.findTop5RentedCars(
+                branchId, toDate(currentMonthStart), toDate(nextMonthStart));
         List<DashboardTopCarDTO> topCars = IntStream.range(0, topCarProjections.size())
                 .mapToObj(i -> toTopCarDTO(topCarProjections.get(i), i + 1))
                 .collect(Collectors.toList());
@@ -104,28 +103,49 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
     }
 
-    private DashboardDailyRevenueDTO toDailyRevenueDTO(DailyRevenueProjection projection) {
-        if (projection == null) {
-            return DashboardDailyRevenueDTO.builder()
-                    .date(null)
-                    .contractAmount(BigDecimal.ZERO)
-                    .rentalAmount(BigDecimal.ZERO)
-                    .surchargeAmount(BigDecimal.ZERO)
-                    .totalAmount(BigDecimal.ZERO)
-                    .build();
+    /**
+     * Map dữ liệu doanh thu theo ngày từ Object[] sang DashboardDailyRevenueDTO
+     * Logic giống với báo cáo doanh thu theo ngày
+     */
+    private List<DashboardDailyRevenueDTO> mapToDailyRevenueDTO(List<Object[]> raw, LocalDate startDate, LocalDate endDate) {
+        // Convert raw data to map for quick lookup
+        Map<LocalDate, DashboardDailyRevenueDTO> dataMap = new HashMap<>();
+        for (Object[] obj : raw) {
+            java.sql.Date sqlDate = (java.sql.Date) obj[0];
+            LocalDate date = sqlDate.toLocalDate();
+            BigDecimal rental = defaultBigDecimal((BigDecimal) obj[2]);
+            BigDecimal surcharge = defaultBigDecimal((BigDecimal) obj[3]);
+            BigDecimal discount = defaultBigDecimal((BigDecimal) obj[4]);
+            // Tính tổng doanh thu = tiền thuê + phụ thu - giảm giá
+            BigDecimal totalRevenue = rental.add(surcharge).subtract(discount);
+
+            dataMap.put(date, DashboardDailyRevenueDTO.builder()
+                    .date(date)
+                    .contractAmount(totalRevenue) // Doanh thu thực thu
+                    .rentalAmount(rental)
+                    .surchargeAmount(surcharge)
+                    .totalAmount(totalRevenue) // Tổng doanh thu hiển thị
+                    .build());
         }
 
-        BigDecimal contractAmount = defaultBigDecimal(projection.getContractAmount());
-        BigDecimal rentalAmount = defaultBigDecimal(projection.getRentalAmount());
-        BigDecimal surchargeAmount = defaultBigDecimal(projection.getSurchargeAmount());
+        // Generate all dates in range, fill with zero if no data
+        List<DashboardDailyRevenueDTO> result = new ArrayList<>();
+        for (LocalDate date = startDate; date.isBefore(endDate); date = date.plusDays(1)) {
+            DashboardDailyRevenueDTO row = dataMap.get(date);
+            if (row != null) {
+                result.add(row);
+            } else {
+                result.add(DashboardDailyRevenueDTO.builder()
+                        .date(date)
+                        .contractAmount(BigDecimal.ZERO)
+                        .rentalAmount(BigDecimal.ZERO)
+                        .surchargeAmount(BigDecimal.ZERO)
+                        .totalAmount(BigDecimal.ZERO)
+                        .build());
+            }
+        }
 
-        return DashboardDailyRevenueDTO.builder()
-                .date(projection.getRevenueDate())
-                .contractAmount(contractAmount)
-                .rentalAmount(rentalAmount)
-                .surchargeAmount(surchargeAmount)
-                .totalAmount(contractAmount)
-                .build();
+        return result;
     }
 
     private BigDecimal defaultBigDecimal(BigDecimal value) {

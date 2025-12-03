@@ -157,13 +157,29 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
             SELECT COUNT(con.id)
             FROM contract con
             WHERE con.status <> 'CANCELLED'
-              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
               AND con.start_date >= :startDate
               AND con.start_date < :endDate
             """, nativeQuery = true)
     long countContractsByBranchAndDate(@Param("branchId") String branchId,
                                        @Param("startDate") Date startDate,
                                        @Param("endDate") Date endDate);
+
+    /**
+     * Đếm số xe đã thuê trong tháng (đếm số bản ghi contract_car từ các contract có status <> 'CANCELLED')
+     */
+    @Query(value = """
+            SELECT COUNT(cc.id)
+            FROM contract_car cc
+            INNER JOIN contract con ON cc.contract_id = con.id
+            WHERE con.status <> 'CANCELLED'
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
+              AND con.start_date >= :startDate
+              AND con.start_date < :endDate
+            """, nativeQuery = true)
+    long countRentedCarsByBranchAndDate(@Param("branchId") String branchId,
+                                        @Param("startDate") Date startDate,
+                                        @Param("endDate") Date endDate);
 
     @Query(value = """
             SELECT 
@@ -172,7 +188,7 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                 COALESCE(SUM(con.total_surcharge), 0) AS surchargeAmount
             FROM contract con
             WHERE con.status <> 'CANCELLED'
-              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
               AND con.start_date >= :startDate
               AND con.start_date < :endDate
             """, nativeQuery = true)
@@ -233,7 +249,7 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
               AND con.completed_date IS NOT NULL
               AND DATE(con.completed_date) >= DATE(:startDate)
               AND DATE(con.completed_date) <= DATE(:endDate)
-              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
             GROUP BY DATE(con.completed_date)
             ORDER BY completedDate
             """, nativeQuery = true)
@@ -242,23 +258,29 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                                                    @Param("endDate") Date endDate);
 
     /**
-     * Lấy top 5 xe được thuê nhiều nhất
+     * Lấy top 5 xe được thuê nhiều nhất (dựa theo ngày hoàn thành, status = COMPLETED)
+     * Logic giống với thống kê lượt thuê theo mẫu xe
      */
     @Query(value = """
             SELECT 
                 c.model AS model,
-                COUNT(DISTINCT con.id) AS rentalCount,
-                COALESCE(SUM(con.final_amount), 0) AS revenue
+                COUNT(cc.id) AS rentalCount,
+                COALESCE(SUM(cc.total_amount), 0) AS revenue
             FROM contract_car cc
             INNER JOIN contract con ON cc.contract_id = con.id
             INNER JOIN car c ON cc.car_id = c.id
-            WHERE con.status <> 'CANCELLED'
-              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId OR con.return_branch_id = :branchId)
+            WHERE con.status = 'COMPLETED'
+              AND con.completed_date IS NOT NULL
+              AND DATE(con.completed_date) >= DATE(:startDate)
+              AND DATE(con.completed_date) <= DATE(:endDate)
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
             GROUP BY c.model
             ORDER BY rentalCount DESC, revenue DESC
             LIMIT 5
             """, nativeQuery = true)
-    List<TopCarRentalProjection> findTop5RentedCars(@Param("branchId") String branchId);
+    List<TopCarRentalProjection> findTop5RentedCars(@Param("branchId") String branchId,
+                                                     @Param("startDate") Date startDate,
+                                                     @Param("endDate") Date endDate);
 
     /**
      * Thống kê lượt thuê theo mẫu xe (dựa theo ngày hoàn thành, status = COMPLETED)
