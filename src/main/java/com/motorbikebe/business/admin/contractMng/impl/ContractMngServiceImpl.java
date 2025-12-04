@@ -333,8 +333,7 @@ public class ContractMngServiceImpl implements ContractMngService {
                 .dailyPrice(createDTO.getDailyPrice())
                 .hourlyPrice(createDTO.getHourlyPrice())
                 .totalAmount(createDTO.getTotalAmount())
-                .startOdometer(createDTO.getStartOdometer())
-                .endOdometer(createDTO.getEndOdometer())
+                // startOdometer và endOdometer chỉ set khi giao xe và trả xe, không set khi tạo hợp đồng
                 .notes(createDTO.getNotes())
                 .build();
 
@@ -537,12 +536,17 @@ public class ContractMngServiceImpl implements ContractMngService {
 
         contractRepository.save(contract);
 
-        // Update cars odometer
+        // Update cars odometer: lấy currentOdometer từ car entity và set vào startOdometer của contract_car
         for (ContractCarSaveDTO carDTO : deliveryDTO.getCars()) {
-            if (carDTO.getId() != null) {
+            if (carDTO.getId() != null && carDTO.getCarId() != null) {
+                // Tìm contract_car
                 contractCarRepository.findById(carDTO.getId()).ifPresent(contractCar -> {
-                    if (carDTO.getStartOdometer() != null)
-                        contractCar.setStartOdometer(carDTO.getStartOdometer());
+                    // Lấy currentOdometer từ car entity và set vào startOdometer của contract_car
+                    carRepository.findById(carDTO.getCarId()).ifPresent(car -> {
+                        if (car.getCurrentOdometer() != null) {
+                            contractCar.setStartOdometer(car.getCurrentOdometer());
+                        }
+                    });
                     contractCarRepository.save(contractCar);
                 });
             }
@@ -613,19 +617,31 @@ public class ContractMngServiceImpl implements ContractMngService {
 
         contractRepository.save(contract);
 
-        // Update cars odometer
+        // Update cars odometer and return status
         for (ContractCarSaveDTO carDTO : returnDTO.getCars()) {
             if (carDTO.getId() != null) {
+                // Update contract_car: end_odometer and return_status
                 contractCarRepository.findById(carDTO.getId()).ifPresent(contractCar -> {
                     contractCar.setEndOdometer(carDTO.getEndOdometer());
+                    // Lưu returnStatus vào contract_car (nếu có)
+                    if (carDTO.getStatus() != null) {
+                        contractCar.setReturnStatus(carDTO.getStatus().name());
+                    }
                     contractCarRepository.save(contractCar);
                 });
 
-                carRepository.findById(carDTO.getId()).ifPresent(car -> {
-                   car.setCurrentOdometer(carDTO.getEndOdometer());
-                   car.setStatus(carDTO.getStatus());
-                   carRepository.save(car);
-                });
+                // Update car: current_odometer and status (dùng carId, không phải contractCarId)
+                if (carDTO.getCarId() != null) {
+                    carRepository.findById(carDTO.getCarId()).ifPresent(car -> {
+                        if (carDTO.getEndOdometer() != null) {
+                            car.setCurrentOdometer(carDTO.getEndOdometer());
+                        }
+                        if (carDTO.getStatus() != null) {
+                            car.setStatus(carDTO.getStatus());
+                        }
+                        carRepository.save(car);
+                    });
+                }
             }
         }
 

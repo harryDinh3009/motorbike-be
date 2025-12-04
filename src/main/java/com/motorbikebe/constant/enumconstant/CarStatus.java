@@ -9,7 +9,8 @@ public enum CarStatus {
     AVAILABLE("Hoạt động"),
     NOT_AVAILABLE("Không sẵn sàng"),
     LOST("Bị mất"),
-    MAINTENANCE("Đang bảo dưỡng");
+    MAINTENANCE("Đang bảo dưỡng"),
+    BROKEN("Hỏng hóc");
 
     private final String description;
 }

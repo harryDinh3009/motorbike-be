@@ -24,6 +24,7 @@ public class ContractCarSaveDTO {
     private Integer startOdometer;
     private Integer endOdometer;
     private String notes;
-    private CarStatus status;
+    private CarStatus status; // Trạng thái xe khi trả (dùng để update vào car entity)
+    private String returnStatus; // Trạng thái xe khi trả (lưu vào contract_car)
 }
 

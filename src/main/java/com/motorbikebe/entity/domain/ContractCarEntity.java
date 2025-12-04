@@ -50,6 +50,10 @@ public class ContractCarEntity extends PrimaryEntity {
     @Column(name = "end_odometer")
     Integer endOdometer;
 
+    /** Trạng thái xe khi trả */
+    @Column(name = "return_status", length = 20)
+    String returnStatus;
+
     /** Ghi chú cho xe này */
     @Lob
     @Column(name = "notes")
