@@ -33,7 +33,10 @@ public class ContractCarDTO {
     private Integer startOdometer;
     private Integer endOdometer;
     
+    // Trạng thái xe khi trả
+    private String returnStatus;
+    
     private String notes;
-    private String status;
+    private String status; // Trạng thái hiện tại của xe
 }
 

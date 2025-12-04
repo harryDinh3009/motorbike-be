@@ -1,5 +1,6 @@
 package com.motorbikebe.dto.business.admin.contractMng;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -34,6 +35,7 @@ public class ContractReturnDTO {
     private String returnUserId;
     
     @NotNull(message = "Thời gian nhận xe không được để trống")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+07:00")
     private Date returnTime;
     
     private String returnAddress;
