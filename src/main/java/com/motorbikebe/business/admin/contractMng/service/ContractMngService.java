@@ -129,4 +129,12 @@ public interface ContractMngService {
      * Tải xuống file PDF hợp đồng
      */
     byte[] downloadContractPDF(String id);
+
+    // ========== Contract Schedule ==========
+
+    /**
+     * Lấy dữ liệu lịch đặt xe
+     * Trả về danh sách contract_car trong khoảng thời gian với filter theo branch và status
+     */
+    List<ContractScheduleItemDTO> getContractSchedule(ContractScheduleRequestDTO requestDTO);
 }

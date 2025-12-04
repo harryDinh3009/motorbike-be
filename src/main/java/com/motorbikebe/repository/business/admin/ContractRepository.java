@@ -317,6 +317,47 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
             """, nativeQuery = true)
     List<String> findAllDistinctModels(@Param("branchId") String branchId);
 
+    /**
+     * Lấy dữ liệu lịch đặt xe
+     * Query lấy tất cả contract_car trong khoảng thời gian với filter theo branch và status
+     * Mỗi row = 1 xe trong hợp đồng (contract_car)
+     * 
+     * Logic filter:
+     * - Hợp đồng overlap với khoảng thời gian: start_date < endDate AND end_date >= startDate
+     * - Filter theo branchId (pickup_branch_id)
+     * - Filter theo status (nếu không null/empty)
+     * - Loại bỏ hợp đồng CANCELLED
+     */
+    @Query(value = """
+            SELECT 
+                cc.id AS contractCarId,
+                con.id AS contractId,
+                con.contract_code AS contractCode,
+                cc.car_id AS carId,
+                c.model AS carModel,
+                c.license_plate AS licensePlate,
+                cus.full_name AS customerName,
+                cus.phone_number AS customerPhone,
+                con.start_date AS startDate,
+                con.end_date AS endDate,
+                con.status AS status,
+                con.pickup_branch_id AS pickupBranchId
+            FROM contract_car cc
+            INNER JOIN contract con ON cc.contract_id = con.id
+            INNER JOIN car c ON cc.car_id = c.id
+            INNER JOIN customer cus ON con.customer_id = cus.id
+            WHERE con.status <> 'CANCELLED'
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
+              AND (:status IS NULL OR :status = '' OR con.status = :status)
+              AND con.start_date < :endDate
+              AND con.end_date >= :startDate
+            ORDER BY c.model ASC, c.license_plate ASC, con.start_date ASC
+            """, nativeQuery = true)
+    List<Object[]> findContractScheduleItems(@Param("branchId") String branchId,
+                                             @Param("status") String status,
+                                             @Param("startDate") Date startDate,
+                                             @Param("endDate") Date endDate);
+
 }
 
 

@@ -404,4 +404,16 @@ public class ContractMngController {
                 .headers(headers)
                 .body(pdfBytes);
     }
+
+    // ========== Contract Schedule ==========
+
+    /**
+     * Lấy dữ liệu lịch đặt xe
+     * Trả về danh sách contract_car trong khoảng thời gian với filter theo branch và status
+     */
+    @PostMapping("/schedule")
+    public ApiResponse<List<ContractScheduleItemDTO>> getContractSchedule(@RequestBody ContractScheduleRequestDTO requestDTO) {
+        List<ContractScheduleItemDTO> data = contractMngService.getContractSchedule(requestDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, data);
+    }
 }

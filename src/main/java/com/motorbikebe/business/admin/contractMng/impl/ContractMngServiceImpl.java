@@ -1222,4 +1222,43 @@ public class ContractMngServiceImpl implements ContractMngService {
             throw new RestApiException(ApiStatus.BAD_REQUEST);
         }
     }
+
+    @Override
+    public List<ContractScheduleItemDTO> getContractSchedule(ContractScheduleRequestDTO requestDTO) {
+        // Validate input
+        if (requestDTO.getStartDate() == null || requestDTO.getEndDate() == null) {
+            throw new RestApiException(ApiStatus.BAD_REQUEST);
+        }
+
+        // Set endDate to end of day (23:59:59) để bao gồm tất cả contracts trong ngày cuối
+        Date startDate = requestDTO.getStartDate();
+        Date endDate = setEndOfDay(requestDTO.getEndDate());
+
+        // Normalize filter values
+        String branchId = StringUtils.isBlank(requestDTO.getBranchId()) ? null : requestDTO.getBranchId();
+        String status = StringUtils.isBlank(requestDTO.getStatus()) ? null : requestDTO.getStatus();
+
+        // Query từ repository
+        List<Object[]> results = contractRepository.findContractScheduleItems(branchId, status, startDate, endDate);
+
+        // Map kết quả sang DTO
+        return results.stream()
+                .map(row -> {
+                    ContractScheduleItemDTO item = new ContractScheduleItemDTO();
+                    item.setContractCarId((String) row[0]);      // cc.id
+                    item.setContractId((String) row[1]);          // con.id
+                    item.setContractCode((String) row[2]);        // con.contract_code
+                    item.setCarId((String) row[3]);               // cc.car_id
+                    item.setCarModel((String) row[4]);            // c.model
+                    item.setLicensePlate((String) row[5]);       // c.license_plate
+                    item.setCustomerName((String) row[6]);       // cus.full_name
+                    item.setCustomerPhone((String) row[7]);       // cus.phone_number
+                    item.setStartDate((Date) row[8]);             // con.start_date
+                    item.setEndDate((Date) row[9]);               // con.end_date
+                    item.setStatus((String) row[10]);             // con.status
+                    item.setPickupBranchId((String) row[11]);    // con.pickup_branch_id
+                    return item;
+                })
+                .collect(Collectors.toList());
+    }
 }

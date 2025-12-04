@@ -1,0 +1,64 @@
+### Test API: Lấy dữ liệu lịch đặt xe
+### Base URL: http://localhost:8345/api
+### Endpoint: POST /a/contract-mng/schedule
+
+### Test 1: Lấy lịch đặt xe tháng 11/2024, tất cả chi nhánh, tất cả trạng thái
+POST http://localhost:8345/api/a/contract-mng/schedule
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "branchId": null,
+  "status": null,
+  "startDate": "2024-11-01",
+  "endDate": "2024-11-30"
+}
+
+### Test 2: Lấy lịch đặt xe tháng 11/2024, chi nhánh cụ thể
+POST http://localhost:8345/api/a/contract-mng/schedule
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "branchId": "branch-001",
+  "status": null,
+  "startDate": "2024-11-01",
+  "endDate": "2024-11-30"
+}
+
+### Test 3: Lấy lịch đặt xe tháng 11/2024, chỉ hợp đồng đã xác nhận
+POST http://localhost:8345/api/a/contract-mng/schedule
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "branchId": null,
+  "status": "CONFIRMED",
+  "startDate": "2024-11-01",
+  "endDate": "2024-11-30"
+}
+
+### Test 4: Lấy lịch đặt xe tháng 11/2024, chi nhánh cụ thể và trạng thái cụ thể
+POST http://localhost:8345/api/a/contract-mng/schedule
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "branchId": "branch-001",
+  "status": "DELIVERED",
+  "startDate": "2024-11-01",
+  "endDate": "2024-11-30"
+}
+
+### Test 5: Lấy lịch đặt xe với empty string (should work như null)
+POST http://localhost:8345/api/a/contract-mng/schedule
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "branchId": "",
+  "status": "",
+  "startDate": "2024-11-01",
+  "endDate": "2024-11-30"
+}
+
