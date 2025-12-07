@@ -688,16 +688,27 @@ public class ContractMngServiceImpl implements ContractMngService {
 
         ContractEntity contract = contractOpt.get();
 
-        // Add final payment if any
+        // Add final payment if any (có thể là số dương hoặc số âm)
         if (completeDTO.getFinalPaymentAmount() != null &&
-                completeDTO.getFinalPaymentAmount().compareTo(BigDecimal.ZERO) > 0) {
+                completeDTO.getFinalPaymentAmount().compareTo(BigDecimal.ZERO) != 0) {
 
             PaymentTransactionSaveDTO paymentDTO = new PaymentTransactionSaveDTO();
             paymentDTO.setContractId(completeDTO.getContractId());
             paymentDTO.setPaymentMethod(completeDTO.getPaymentMethod());
-            paymentDTO.setAmount(completeDTO.getFinalPaymentAmount());
+            paymentDTO.setAmount(completeDTO.getFinalPaymentAmount()); // Có thể là số âm
             paymentDTO.setPaymentDate(completeDTO.getCompletedDate());
-            paymentDTO.setNotes(completeDTO.getPaymentNotes());
+            
+            // Set ghi chú dựa trên số tiền
+            if (completeDTO.getFinalPaymentAmount().compareTo(BigDecimal.ZERO) > 0) {
+                paymentDTO.setNotes("Hoàn thành");
+            } else {
+                paymentDTO.setNotes("Hoàn thành: Trả tiền thừa");
+            }
+            
+            // Nếu có ghi chú từ frontend thì ưu tiên dùng ghi chú đó
+            if (StringUtils.isNotBlank(completeDTO.getPaymentNotes())) {
+                paymentDTO.setNotes(completeDTO.getPaymentNotes());
+            }
 
             addPayment(paymentDTO);
         }
