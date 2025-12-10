@@ -112,7 +112,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                                 FROM contract_car cc
                                 INNER JOIN contract con ON cc.contract_id = con.id
                                 WHERE cc.car_id = c.id
-                                AND con.status IN ('CONFIRMED', 'DELIVERED', 'RETURNED')
+                                AND con.status IN ('CONFIRMED', 'DELIVERED')
                                 AND (
                                     (:#{#req.startDate} BETWEEN con.start_date AND con.end_date)
                                     OR (:#{#req.endDate} BETWEEN con.start_date AND con.end_date)
@@ -181,7 +181,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                                 FROM contract_car cc
                                 INNER JOIN contract con ON cc.contract_id = con.id
                                 WHERE cc.car_id = c.id
-                                AND con.status IN ('CONFIRMED', 'DELIVERED', 'RETURNED')
+                                AND con.status IN ('CONFIRMED', 'DELIVERED')
                                 AND (
                                     (:#{#req.startDate} BETWEEN con.start_date AND con.end_date)
                                     OR (:#{#req.endDate} BETWEEN con.start_date AND con.end_date)
@@ -254,7 +254,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                     FROM contract_car cc
                     INNER JOIN contract con ON cc.contract_id = con.id
                     WHERE cc.car_id = c.id
-                      AND con.status IN ('CONFIRMED', 'DELIVERED', 'RETURNED')
+                      AND con.status IN ('CONFIRMED', 'DELIVERED')
                       AND (
                           (:#{#req.startDate} BETWEEN con.start_date AND con.end_date)
                           OR (:#{#req.endDate} BETWEEN con.start_date AND con.end_date)
@@ -304,7 +304,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                     FROM contract_car cc
                     INNER JOIN contract con ON cc.contract_id = con.id
                     WHERE cc.car_id = c.id
-                      AND con.status IN ('CONFIRMED', 'DELIVERED', 'RETURNED')
+                      AND con.status IN ('CONFIRMED', 'DELIVERED')
                       AND (
                           (:#{#req.startDate} BETWEEN con.start_date AND con.end_date)
                           OR (:#{#req.endDate} BETWEEN con.start_date AND con.end_date)

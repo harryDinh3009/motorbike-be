@@ -634,6 +634,55 @@ public class ContractMngServiceImpl implements ContractMngService {
     }
 
     @Override
+    public Boolean checkDeliveryPermission(String contractId) {
+        Optional<ContractEntity> contractOpt = contractRepository.findById(contractId);
+        if (!contractOpt.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+
+        ContractEntity contract = contractOpt.get();
+        List<ContractCarEntity> cars = contractCarRepository.findByContractId(contractId);
+
+        if (contract.getStartDate() == null) {
+            throw new RestApiException(ApiStatus.BAD_REQUEST, "Hợp đồng chưa có ngày thuê.");
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
+
+        List<String> errorMessages = new ArrayList<>();
+
+        for (ContractCarEntity contractCar : cars) {
+            List<ContractEntity> previousContracts = contractRepository
+                    .findLatestUnreturnedContractByCarId(contractCar.getCarId(), contractId, contract.getStartDate());
+
+            if (!previousContracts.isEmpty()) {
+                ContractEntity previousContract = previousContracts.get(0);
+                Optional<CarEntity> carOpt = carRepository.findById(contractCar.getCarId());
+                String carPlate = carOpt.map(CarEntity::getLicensePlate)
+                        .orElse("ID: " + contractCar.getCarId());
+
+                String errorMessage = String.format(
+                        "Không thể giao xe %s do hợp đồng gần nhất là hợp đồng %s (từ %s đến %s) vẫn chưa trả xe.",
+                        carPlate,
+                        previousContract.getContractCode(),
+                        dateFormat.format(previousContract.getStartDate()),
+                        dateFormat.format(previousContract.getEndDate())
+                );
+
+                errorMessages.add(errorMessage);
+            }
+        }
+
+        if (!errorMessages.isEmpty()) {
+            String combinedMessage = String.join("\n", errorMessages);
+            throw new RestApiException(ApiStatus.CAR_NOT_RETURNED_IN_PREVIOUS_CONTRACT, combinedMessage);
+        }
+
+        return true;
+    }
+
+    @Override
     @Transactional
     public Boolean updateReturn(@Valid ContractReturnDTO returnDTO) {
         Optional<ContractEntity> contractOpt = contractRepository.findById(returnDTO.getContractId());
@@ -1288,6 +1337,7 @@ public class ContractMngServiceImpl implements ContractMngService {
             dto.setCarType(car.getCarType());
             dto.setLicensePlate(car.getLicensePlate());
             dto.setStatus(car.getStatus().toString());
+            dto.setCurrentOdometer(car.getCurrentOdometer()); // Lấy odometer hiện tại từ bảng car
         });
 
         return dto;

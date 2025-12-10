@@ -187,6 +187,15 @@ public class ContractMngController {
     // ========== Delivery Process ==========
 
     /**
+     * Kiểm tra quyền giao xe
+     */
+    @GetMapping("/delivery/check-permission/{contractId}")
+    public ApiResponse<Boolean> checkDeliveryPermission(@PathVariable String contractId) {
+        Boolean hasPermission = contractMngService.checkDeliveryPermission(contractId);
+        return new ApiResponse<>(ApiStatus.SUCCESS, hasPermission);
+    }
+
+    /**
      * Cập nhật thông tin giao xe
      */
     @PostMapping("/delivery/update")

@@ -119,6 +119,14 @@ public interface ContractMngService {
     Boolean checkReturnPermission(String contractId);
 
     /**
+     * Kiểm tra quyền giao xe cho hợp đồng
+     * Kiểm tra xem các xe trong hợp đồng có đang trong hợp đồng gần nhất chưa trả hay không
+     * @param contractId ID hợp đồng
+     * @return true nếu có thể giao xe, throw exception nếu không thể giao xe
+     */
+    Boolean checkDeliveryPermission(String contractId);
+
+    /**
      * Upload ảnh nhận xe
      */
     List<String> uploadReturnImages(String contractId, List<MultipartFile> files);

@@ -148,6 +148,27 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                                                     @Param("endDate") Date endDate);
 
     /**
+     * Tìm hợp đồng gần nhất trong quá khứ của một xe chưa được trả (status không phải RETURNED, COMPLETED, CANCELLED)
+     * Chỉ tìm hợp đồng có start_date < currentContractStartDate (trước ngày thuê của hợp đồng hiện tại)
+     * Sắp xếp theo start_date DESC để lấy hợp đồng gần nhất trong quá khứ
+     */
+    @Query(value = """
+            SELECT con.* FROM contract con
+            INNER JOIN contract_car cc ON con.id = cc.contract_id
+            WHERE cc.car_id = :carId
+            AND con.id != :excludeContractId
+            AND con.status NOT IN ('RETURNED', 'COMPLETED', 'CANCELLED')
+            AND con.start_date < :currentContractStartDate
+            ORDER BY con.start_date DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    List<ContractEntity> findLatestUnreturnedContractByCarId(
+            @Param("carId") String carId,
+            @Param("excludeContractId") String excludeContractId,
+            @Param("currentContractStartDate") Date currentContractStartDate
+    );
+
+    /**
      * Generate mã hợp đồng mới (HDxxxx)
      */
     @Query(value = "SELECT CONCAT('HD', LPAD(IFNULL(MAX(CAST(SUBSTRING(contract_code, 3) AS UNSIGNED)), 0) + 1, 6, '0')) FROM contract WHERE contract_code LIKE 'HD%'", nativeQuery = true)
