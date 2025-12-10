@@ -5,6 +5,7 @@ import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchAvailableDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
+import com.motorbikebe.dto.business.admin.carMng.ConflictingContractDTO;
 import com.motorbikebe.entity.domain.CarEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -145,6 +146,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
             AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
+            AND c.status = 'AVAILABLE'
             ORDER BY c.created_date DESC
             """, countQuery = """
             SELECT COUNT(c.id)
@@ -157,6 +159,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
             AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
+            AND c.status = 'AVAILABLE'
             """, nativeQuery = true)
     Page<CarDTO> searchAvailableCars(Pageable pageable, @Param("req") CarSearchDTO req);
 
@@ -316,5 +319,44 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             ORDER BY c.model ASC, c.license_plate ASC
             """, nativeQuery = true)
     List<CarDTO> findAvailableCarsForReportAvailable(@Param("req") CarSearchAvailableDTO req);
+
+    /**
+     * Lấy danh sách hợp đồng conflict với xe trong khoảng thời gian
+     * 
+     * @param carId ID xe
+     * @param startDate Ngày bắt đầu (ISO string)
+     * @param endDate Ngày kết thúc (ISO string)
+     * @return List<ConflictingContractDTO>
+     */
+    @Query(value = """
+            SELECT con.id,
+                   con.contract_code AS contractCode,
+                   cus.full_name AS customerName,
+                   con.start_date AS startDate,
+                   con.end_date AS endDate,
+                   con.status,
+                   CASE con.status
+                       WHEN 'CONFIRMED' THEN 'Đã xác nhận'
+                       WHEN 'DELIVERED' THEN 'Đã giao xe'
+                       WHEN 'RETURNED' THEN 'Đã trả xe'
+                       WHEN 'COMPLETED' THEN 'Hoàn thành'
+                       WHEN 'CANCELLED' THEN 'Đã hủy'
+                       ELSE con.status
+                   END AS statusNm
+            FROM contract con
+            INNER JOIN contract_car cc ON con.id = cc.contract_id
+            LEFT JOIN customer cus ON con.customer_id = cus.id
+            WHERE cc.car_id = :carId
+              AND con.status IN ('CONFIRMED', 'DELIVERED')
+              AND (
+                  (con.start_date <= :endDate AND con.end_date >= :startDate)
+              )
+            ORDER BY con.start_date ASC
+            """, nativeQuery = true)
+    List<ConflictingContractDTO> findConflictingContracts(
+            @Param("carId") String carId,
+            @Param("startDate") String startDate,
+            @Param("endDate") String endDate
+    );
 }
 

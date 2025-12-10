@@ -10,6 +10,7 @@ import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSaveDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
+import com.motorbikebe.dto.business.admin.carMng.ConflictingContractDTO;
 import com.motorbikebe.dto.common.userCurrent.UserCurrentInfoDTO;
 import com.motorbikebe.entity.domain.CarEntity;
 import com.motorbikebe.repository.business.admin.CarRepository;
@@ -220,6 +221,11 @@ public class CarMngServiceImpl implements CarMngService {
         });
 
         return new PageableObject<>(carPage);
+    }
+
+    @Override
+    public List<ConflictingContractDTO> getConflictingContracts(String carId, String startDate, String endDate) {
+        return carRepository.findConflictingContracts(carId, startDate, endDate);
     }
 }
 

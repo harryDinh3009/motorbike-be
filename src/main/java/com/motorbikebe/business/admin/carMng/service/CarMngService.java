@@ -5,6 +5,7 @@ import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSaveDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
+import com.motorbikebe.dto.business.admin.carMng.ConflictingContractDTO;
 import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -84,5 +85,16 @@ public interface CarMngService {
      * @return PageableObject<AvailableCarDTO>
      */
     PageableObject<AvailableCarDTO> searchAvailableCarsLight(CarSearchDTO searchDTO);
+
+    /**
+     * Lấy danh sách hợp đồng conflict với xe trong khoảng thời gian
+     * Dùng để hiển thị tooltip khi xe không khả dụng
+     *
+     * @param carId ID xe
+     * @param startDate Ngày bắt đầu (ISO string)
+     * @param endDate Ngày kết thúc (ISO string)
+     * @return List<ConflictingContractDTO>
+     */
+    List<ConflictingContractDTO> getConflictingContracts(String carId, String startDate, String endDate);
 }
 

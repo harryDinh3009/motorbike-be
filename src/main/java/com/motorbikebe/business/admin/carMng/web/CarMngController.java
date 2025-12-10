@@ -11,6 +11,7 @@ import com.motorbikebe.constant.classconstant.CarConstants;
 import com.motorbikebe.constant.enumconstant.CarStatus;
 import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.*;
+import com.motorbikebe.dto.business.admin.carMng.ConflictingContractDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -91,6 +92,25 @@ public class CarMngController {
     public ApiResponse<CarDTO> getCarDetail(@RequestParam("id") String id) {
         CarDTO response = carMngService.getCarDetail(id);
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Lấy danh sách hợp đồng conflict với xe trong khoảng thời gian
+     * Dùng để hiển thị tooltip khi xe không khả dụng
+     *
+     * @param carId ID xe
+     * @param startDate Ngày bắt đầu (ISO string)
+     * @param endDate Ngày kết thúc (ISO string)
+     * @return List<ConflictingContractDTO>
+     */
+    @GetMapping("/{carId}/conflicting-contracts")
+    public ApiResponse<List<ConflictingContractDTO>> getConflictingContracts(
+            @PathVariable String carId,
+            @RequestParam String startDate,
+            @RequestParam String endDate
+    ) {
+        List<ConflictingContractDTO> contracts = carMngService.getConflictingContracts(carId, startDate, endDate);
+        return new ApiResponse<>(ApiStatus.SUCCESS, contracts);
     }
 
     /**
