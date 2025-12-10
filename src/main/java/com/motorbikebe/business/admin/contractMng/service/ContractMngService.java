@@ -112,6 +112,13 @@ public interface ContractMngService {
     Boolean updateReturn(@Valid ContractReturnDTO returnDTO);
 
     /**
+     * Kiểm tra quyền trả xe cho hợp đồng
+     * @param contractId ID hợp đồng
+     * @return true nếu có quyền, throw exception nếu không có quyền
+     */
+    Boolean checkReturnPermission(String contractId);
+
+    /**
      * Upload ảnh nhận xe
      */
     List<String> uploadReturnImages(String contractId, List<MultipartFile> files);

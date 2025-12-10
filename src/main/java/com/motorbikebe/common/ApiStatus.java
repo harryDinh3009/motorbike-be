@@ -80,6 +80,7 @@ public enum ApiStatus {
     // Contract validation errors
     CAR_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "400031", "Xe không khả dụng trong khoảng thời gian đã chọn."),
     CONTRACT_DATE_CONFLICT(HttpStatus.BAD_REQUEST, "400032", "Thời gian thuê/trả bị trùng với hợp đồng khác."),
+    RETURN_BRANCH_PERMISSION_DENIED(HttpStatus.BAD_REQUEST, "400033", "Bạn không có quyền thực hiện chức năng do không thuộc chi nhánh trả."),
 
     // ===== 5xx: Server Errors =====
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500001", "An unexpected server error occurred."),

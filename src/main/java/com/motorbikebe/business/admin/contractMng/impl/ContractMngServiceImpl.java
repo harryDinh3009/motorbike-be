@@ -8,12 +8,14 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.motorbikebe.business.admin.contractMng.service.ContractMngService;
+import com.motorbikebe.business.common.service.service.CommonService;
 import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.common.PageableObject;
 import com.motorbikebe.config.cloudinary.CloudinaryUploadImages;
 import com.motorbikebe.config.exception.RestApiException;
 import com.motorbikebe.constant.enumconstant.ContractStatus;
 import com.motorbikebe.dto.business.admin.contractMng.*;
+import com.motorbikebe.dto.common.userCurrent.UserCurrentInfoDTO;
 import com.motorbikebe.entity.domain.*;
 import com.motorbikebe.repository.business.admin.*;
 import jakarta.validation.Valid;
@@ -57,6 +59,7 @@ public class ContractMngServiceImpl implements ContractMngService {
     private final SurchargeRepository surchargeRepository;
     private final CloudinaryUploadImages cloudinaryUploadImages;
     private final ModelMapper modelMapper;
+    private final CommonService commonService;
 
     @Override
     public PageableObject<ContractDTO> searchContracts(ContractSearchDTO searchDTO) {
@@ -607,6 +610,30 @@ public class ContractMngServiceImpl implements ContractMngService {
     }
 
     @Override
+    public Boolean checkReturnPermission(String contractId) {
+        Optional<ContractEntity> contractOpt = contractRepository.findById(contractId);
+        if (!contractOpt.isPresent()) {
+            throw new RestApiException(ApiStatus.NOT_FOUND);
+        }
+
+        ContractEntity contract = contractOpt.get();
+        
+        // Kiểm tra quyền: chỉ cho phép trả xe nếu user thuộc chi nhánh trả xe
+        UserCurrentInfoDTO userCurrentInfo = commonService.getUserCurrentInfo();
+        if (userCurrentInfo != null && StringUtils.isNotBlank(userCurrentInfo.getBranchId())) {
+            String userBranchId = userCurrentInfo.getBranchId();
+            String returnBranchId = contract.getReturnBranchId();
+            
+            // Nếu hợp đồng có chi nhánh trả xe, user phải thuộc chi nhánh đó
+            if (StringUtils.isNotBlank(returnBranchId) && !returnBranchId.equals(userBranchId)) {
+                throw new RestApiException(ApiStatus.RETURN_BRANCH_PERMISSION_DENIED);
+            }
+        }
+        
+        return true;
+    }
+
+    @Override
     @Transactional
     public Boolean updateReturn(@Valid ContractReturnDTO returnDTO) {
         Optional<ContractEntity> contractOpt = contractRepository.findById(returnDTO.getContractId());
@@ -615,6 +642,18 @@ public class ContractMngServiceImpl implements ContractMngService {
         }
 
         ContractEntity contract = contractOpt.get();
+        
+        // Kiểm tra quyền: chỉ cho phép trả xe nếu user thuộc chi nhánh trả xe
+        UserCurrentInfoDTO userCurrentInfo = commonService.getUserCurrentInfo();
+        if (userCurrentInfo != null && StringUtils.isNotBlank(userCurrentInfo.getBranchId())) {
+            String userBranchId = userCurrentInfo.getBranchId();
+            String returnBranchId = contract.getReturnBranchId();
+            
+            // Nếu hợp đồng có chi nhánh trả xe, user phải thuộc chi nhánh đó
+            if (StringUtils.isNotBlank(returnBranchId) && !returnBranchId.equals(userBranchId)) {
+                throw new RestApiException(ApiStatus.RETURN_BRANCH_PERMISSION_DENIED);
+            }
+        }
 
         // Update return info
         contract.setReturnUserId(returnDTO.getReturnUserId());

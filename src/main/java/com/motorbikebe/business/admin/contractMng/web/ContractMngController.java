@@ -216,7 +216,16 @@ public class ContractMngController {
     // ========== Return Process ==========
 
     /**
-     * Cập nhật thông tin nhận xe
+     * Kiểm tra quyền trả xe
+     */
+    @GetMapping("/return/check-permission/{contractId}")
+    public ApiResponse<Boolean> checkReturnPermission(@PathVariable String contractId) {
+        Boolean response = contractMngService.checkReturnPermission(contractId);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Cập nhật thông tin trả xe
      */
     @PostMapping("/return/update")
     public ApiResponse<Boolean> updateReturn(@RequestBody ContractReturnDTO returnDTO) {
