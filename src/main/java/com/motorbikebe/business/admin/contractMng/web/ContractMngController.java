@@ -416,4 +416,16 @@ public class ContractMngController {
         List<ContractScheduleItemDTO> data = contractMngService.getContractSchedule(requestDTO);
         return new ApiResponse<>(ApiStatus.SUCCESS, data);
     }
+
+    // ========== Car Availability Check ==========
+
+    /**
+     * Check availability của nhiều xe cùng lúc
+     * Trả về Map<carId, isAvailable>
+     */
+    @PostMapping("/check-cars-availability")
+    public ApiResponse<Map<String, Boolean>> checkCarsAvailability(@RequestBody CheckCarsAvailabilityDTO requestDTO) {
+        Map<String, Boolean> response = contractMngService.checkCarsAvailability(requestDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
 }

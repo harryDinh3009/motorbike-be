@@ -213,7 +213,21 @@ public class ContractMngServiceImpl implements ContractMngService {
                 }
 
                 if (!overlappingContracts.isEmpty()) {
-                    throw new RestApiException(ApiStatus.BAD_REQUEST);
+                    ContractEntity conflictContract = overlappingContracts.get(0);
+                    // Lấy thông tin xe để hiển thị trong message
+                    Optional<CarEntity> carOpt = carRepository.findById(carDTO.getCarId());
+                    String carInfo = carOpt.map(c -> c.getLicensePlate()).orElse("ID: " + carDTO.getCarId());
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                    // Set timezone GMT+7 để tránh lệch thời gian
+                    dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
+                    String conflictInfo = String.format(
+                        "Xe %s không khả dụng vì đã được đặt trong hợp đồng %s (từ %s đến %s).",
+                        carInfo,
+                        conflictContract.getContractCode(),
+                        dateFormat.format(conflictContract.getStartDate()),
+                        dateFormat.format(conflictContract.getEndDate())
+                    );
+                    throw new RestApiException(ApiStatus.CONTRACT_DATE_CONFLICT, conflictInfo);
                 }
             }
         }
@@ -423,8 +437,17 @@ public class ContractMngServiceImpl implements ContractMngService {
         SurchargeEntity surcharge = surchargeRepository.findById(id)
                 .orElseThrow(() -> new RestApiException(ApiStatus.NOT_FOUND));
 
+        if (StringUtils.isNotBlank(saveDTO.getSurchargeTypeId())) {
+            surcharge.setSurchargeTypeId(saveDTO.getSurchargeTypeId());
+        }
         if (StringUtils.isNotBlank(saveDTO.getDescription())) {
             surcharge.setDescription(saveDTO.getDescription());
+        }
+        if (saveDTO.getQuantity() != null) {
+            surcharge.setQuantity(saveDTO.getQuantity());
+        }
+        if (saveDTO.getUnitPrice() != null) {
+            surcharge.setUnitPrice(saveDTO.getUnitPrice());
         }
         if (saveDTO.getAmount() != null) {
             surcharge.setAmount(saveDTO.getAmount());
@@ -1287,5 +1310,75 @@ public class ContractMngServiceImpl implements ContractMngService {
                     return item;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Boolean> checkCarsAvailability(CheckCarsAvailabilityDTO requestDTO) {
+        Map<String, Boolean> result = new HashMap<>();
+        
+        if (requestDTO == null || requestDTO.getCarIds() == null || requestDTO.getCarIds().isEmpty()) {
+            return result;
+        }
+        
+        if (StringUtils.isBlank(requestDTO.getStartDate()) || StringUtils.isBlank(requestDTO.getEndDate())) {
+            // Nếu không có ngày thì coi như tất cả xe đều khả dụng
+            for (String carId : requestDTO.getCarIds()) {
+                result.put(carId, true);
+            }
+            return result;
+        }
+        
+        // Parse String thành Date
+        Date startDate;
+        Date endDate;
+        try {
+            // Thử parse với format ISO: yyyy-MM-dd'T'HH:mm:ss hoặc yyyy-MM-dd'T'HH:mm
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            try {
+                startDate = dateFormat.parse(requestDTO.getStartDate());
+            } catch (Exception e) {
+                // Thử format khác: yyyy-MM-dd'T'HH:mm
+                SimpleDateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+                startDate = dateFormat2.parse(requestDTO.getStartDate());
+            }
+            
+            try {
+                endDate = dateFormat.parse(requestDTO.getEndDate());
+            } catch (Exception e) {
+                // Thử format khác: yyyy-MM-dd'T'HH:mm
+                SimpleDateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+                endDate = dateFormat2.parse(requestDTO.getEndDate());
+            }
+        } catch (Exception e) {
+            log.error("Error parsing dates: startDate={}, endDate={}", requestDTO.getStartDate(), requestDTO.getEndDate(), e);
+            // Nếu parse lỗi thì coi như tất cả xe đều không khả dụng để an toàn
+            for (String carId : requestDTO.getCarIds()) {
+                result.put(carId, false);
+            }
+            return result;
+        }
+        
+        for (String carId : requestDTO.getCarIds()) {
+            try {
+                List<ContractEntity> overlappingContracts = contractRepository.findOverlappingContracts(
+                        carId, startDate, endDate);
+                
+                // Loại trừ contract nếu có excludeContractId
+                if (StringUtils.isNotBlank(requestDTO.getExcludeContractId())) {
+                    overlappingContracts = overlappingContracts.stream()
+                            .filter(c -> !c.getId().equals(requestDTO.getExcludeContractId()))
+                            .collect(Collectors.toList());
+                }
+                
+                // Xe khả dụng nếu không có contract nào overlap
+                result.put(carId, overlappingContracts.isEmpty());
+            } catch (Exception e) {
+                log.error("Error checking availability for carId: " + carId, e);
+                // Nếu có lỗi thì coi như xe không khả dụng để an toàn
+                result.put(carId, false);
+            }
+        }
+        
+        return result;
     }
 }

@@ -6,6 +6,7 @@ import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.common.PageableObject;
 import com.motorbikebe.config.cloudinary.CloudinaryUploadImages;
 import com.motorbikebe.config.exception.RestApiException;
+import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSaveDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
@@ -188,6 +189,28 @@ public class CarMngServiceImpl implements CarMngService {
 
         Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
         Page<CarDTO> carPage = carRepository.searchAvailableCars(pageable, searchDTO);
+
+        // Set status name
+        carPage.getContent().forEach(car -> {
+            if (car.getStatus() != null) {
+                car.setStatusNm(car.getStatus().getDescription());
+            }
+        });
+
+        return new PageableObject<>(carPage);
+    }
+
+    @Override
+    public PageableObject<AvailableCarDTO> searchAvailableCarsLight(CarSearchDTO searchDTO) {
+        // Lấy thông tin user hiện tại
+        UserCurrentInfoDTO userCurrentInfo = commonService.getUserCurrentInfo();
+        if (userCurrentInfo != null && StringUtils.isNotBlank(userCurrentInfo.getBranchId())) {
+            // Set branchId của user hiện tại vào searchDTO để lọc xe theo chi nhánh
+            searchDTO.setBranchId(userCurrentInfo.getBranchId());
+        }
+
+        Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
+        Page<AvailableCarDTO> carPage = carRepository.searchAvailableCarsLight(pageable, searchDTO);
 
         // Set status name
         carPage.getContent().forEach(car -> {

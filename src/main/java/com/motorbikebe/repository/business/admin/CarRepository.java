@@ -1,6 +1,7 @@
 package com.motorbikebe.repository.business.admin;
 
 import com.motorbikebe.constant.enumconstant.CarStatus;
+import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchAvailableDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
@@ -158,6 +159,63 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
             """, nativeQuery = true)
     Page<CarDTO> searchAvailableCars(Pageable pageable, @Param("req") CarSearchDTO req);
+
+    /**
+     * Tìm kiếm xe khả dụng (lightweight) - chỉ trả về các field cần thiết
+     * Dùng cho màn chọn xe khi tạo hợp đồng
+     */
+    @Query(value = """
+            SELECT c.id,
+                   c.model,
+                   c.license_plate AS licensePlate,
+                   c.car_type AS carType,
+                   c.branch_id AS branchId,
+                   b.name AS branchName,
+                   c.daily_price AS dailyPrice,
+                   c.hourly_price AS hourlyPrice,
+                   CASE
+                       WHEN :#{#req.startDate} IS NOT NULL 
+                            AND :#{#req.endDate} IS NOT NULL
+                            AND EXISTS (
+                                SELECT 1 
+                                FROM contract_car cc
+                                INNER JOIN contract con ON cc.contract_id = con.id
+                                WHERE cc.car_id = c.id
+                                AND con.status IN ('CONFIRMED', 'DELIVERED', 'RETURNED')
+                                AND (
+                                    (:#{#req.startDate} BETWEEN con.start_date AND con.end_date)
+                                    OR (:#{#req.endDate} BETWEEN con.start_date AND con.end_date)
+                                    OR (con.start_date BETWEEN :#{#req.startDate} AND :#{#req.endDate})
+                                    OR (con.end_date BETWEEN :#{#req.startDate} AND :#{#req.endDate})
+                                )
+                            )
+                       THEN 'NOT_AVAILABLE'
+                       ELSE c.status
+                   END AS status,
+                   c.image_url AS imageUrl
+            FROM car c
+            LEFT JOIN branch b ON c.branch_id = b.id
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
+                   OR c.model LIKE %:#{#req.keyword}% 
+                   OR c.license_plate LIKE %:#{#req.keyword}%)
+            AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
+            AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
+            AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
+            AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
+            ORDER BY c.model ASC, c.license_plate ASC
+            """, countQuery = """
+            SELECT COUNT(c.id)
+            FROM car c
+            LEFT JOIN branch b ON c.branch_id = b.id
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
+                   OR c.model LIKE %:#{#req.keyword}% 
+                   OR c.license_plate LIKE %:#{#req.keyword}%)
+            AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
+            AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
+            AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
+            AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
+            """, nativeQuery = true)
+    Page<AvailableCarDTO> searchAvailableCarsLight(Pageable pageable, @Param("req") CarSearchDTO req);
 
     @Query(value = """
             SELECT c.id,

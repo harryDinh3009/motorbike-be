@@ -15,7 +15,10 @@ public interface SurchargeRepository extends JpaRepository<SurchargeEntity, Stri
     @Query(value = """
             SELECT s.id,
                    s.contract_id AS contractId,
+                   s.surcharge_type_id AS surchargeTypeId,
                    s.description,
+                   s.quantity,
+                   s.unit_price AS unitPrice,
                    s.amount,
                    s.notes
             FROM surcharge s

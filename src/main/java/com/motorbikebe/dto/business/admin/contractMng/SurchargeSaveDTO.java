@@ -15,8 +15,17 @@ public class SurchargeSaveDTO {
     /** ID hợp đồng */
     private String contractId;
 
+    /** ID loại phụ thu (tham chiếu đến surcharge_type) */
+    private String surchargeTypeId;
+
     /** Mô tả phụ phí */
     private String description;
+
+    /** Số lượng */
+    private BigDecimal quantity;
+
+    /** Đơn giá */
+    private BigDecimal unitPrice;
 
     /** Số tiền phụ phí */
     private BigDecimal amount;

@@ -9,6 +9,7 @@ import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.common.PageableObject;
 import com.motorbikebe.constant.classconstant.CarConstants;
 import com.motorbikebe.constant.enumconstant.CarStatus;
+import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,23 @@ public class CarMngController {
     @PostMapping("/list-available")
     public ApiResponse<PageableObject<CarDTO>> searchAvailableCars(@RequestBody CarSearchDTO searchDTO) {
         PageableObject<CarDTO> pageableRes = carMngService.searchAvailableCars(searchDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, pageableRes);
+    }
+
+    /**
+     * Tìm kiếm xe khả dụng (lightweight) - chỉ trả về các field cần thiết
+     * Dùng cho màn chọn xe khi tạo hợp đồng để tối ưu hiệu suất
+     * - Chỉ lấy các xe thuộc chi nhánh của người đang đăng nhập
+     * - Nếu truyền startDate và endDate: kiểm tra xe có trong hợp đồng nào có thời gian trùng lặp không
+     *   + Nếu trùng: chuyển status về NOT_AVAILABLE
+     *   + Nếu không trùng: giữ nguyên status của xe
+     *
+     * @param searchDTO DTO tìm kiếm (bao gồm startDate và endDate)
+     * @return PageableObject<AvailableCarDTO>
+     */
+    @PostMapping("/list-available-light")
+    public ApiResponse<PageableObject<AvailableCarDTO>> searchAvailableCarsLight(@RequestBody CarSearchDTO searchDTO) {
+        PageableObject<AvailableCarDTO> pageableRes = carMngService.searchAvailableCarsLight(searchDTO);
         return new ApiResponse<>(ApiStatus.SUCCESS, pageableRes);
     }
 

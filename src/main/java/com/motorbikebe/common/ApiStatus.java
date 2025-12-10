@@ -77,6 +77,10 @@ public enum ApiStatus {
     CANNOT_DELETE_CAR_MODEL_HAS_CARS(HttpStatus.BAD_REQUEST, "400029", "Không thể xóa vì mẫu xe này đang được gán cho xe trong hệ thống."),
     CANNOT_DELETE_USER_HAS_CONTRACTS(HttpStatus.BAD_REQUEST, "400030", "Không thể xóa vì nhân viên này đã được phân công trong hợp đồng thuê xe."),
 
+    // Contract validation errors
+    CAR_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "400031", "Xe không khả dụng trong khoảng thời gian đã chọn."),
+    CONTRACT_DATE_CONFLICT(HttpStatus.BAD_REQUEST, "400032", "Thời gian thuê/trả bị trùng với hợp đồng khác."),
+
     // ===== 5xx: Server Errors =====
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500001", "An unexpected server error occurred."),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "500002", "Bad request");

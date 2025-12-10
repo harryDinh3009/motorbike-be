@@ -25,9 +25,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RestApiException.class)
     public ApiResponse<Object> handleCustomException(RestApiException restApiException) {
         ApiStatus apiStatus = restApiException.getApiStatus();
-        System.err.println(restApiException.getMessage());
+        String message = restApiException.getCustomMessage() != null 
+                ? restApiException.getCustomMessage() 
+                : restApiException.getMessage();
+        System.err.println(message);
         logger.error("RestApiException: ", restApiException);
-        return new ApiResponse<>(apiStatus, null);
+        return new ApiResponse<>(apiStatus, null, message);
     }
 
     /**

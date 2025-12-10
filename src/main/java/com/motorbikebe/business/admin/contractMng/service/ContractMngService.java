@@ -137,4 +137,12 @@ public interface ContractMngService {
      * Trả về danh sách contract_car trong khoảng thời gian với filter theo branch và status
      */
     List<ContractScheduleItemDTO> getContractSchedule(ContractScheduleRequestDTO requestDTO);
+
+    // ========== Car Availability Check ==========
+
+    /**
+     * Check availability của nhiều xe cùng lúc
+     * Trả về Map<carId, isAvailable>
+     */
+    java.util.Map<String, Boolean> checkCarsAvailability(CheckCarsAvailabilityDTO requestDTO);
 }

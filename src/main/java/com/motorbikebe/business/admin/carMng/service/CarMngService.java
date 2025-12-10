@@ -1,6 +1,7 @@
 package com.motorbikebe.business.admin.carMng.service;
 
 import com.motorbikebe.common.PageableObject;
+import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSaveDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
@@ -70,5 +71,18 @@ public interface CarMngService {
      * @return PageableObject<CarDTO>
      */
     PageableObject<CarDTO> searchAvailableCars(CarSearchDTO searchDTO);
+
+    /**
+     * Tìm kiếm xe khả dụng (lightweight) - chỉ trả về các field cần thiết
+     * Dùng cho màn chọn xe khi tạo hợp đồng để tối ưu hiệu suất
+     * - Chỉ lấy các xe thuộc chi nhánh của người đang đăng nhập
+     * - Nếu truyền startDate và endDate: kiểm tra xe có trong hợp đồng nào có thời gian trùng lặp không
+     *   + Nếu trùng: chuyển status về NOT_AVAILABLE
+     *   + Nếu không trùng: giữ nguyên status của xe
+     *
+     * @param searchDTO DTO tìm kiếm (bao gồm startDate và endDate)
+     * @return PageableObject<AvailableCarDTO>
+     */
+    PageableObject<AvailableCarDTO> searchAvailableCarsLight(CarSearchDTO searchDTO);
 }
 
