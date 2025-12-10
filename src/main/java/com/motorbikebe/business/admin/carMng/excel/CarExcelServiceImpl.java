@@ -72,8 +72,39 @@ public class CarExcelServiceImpl implements CarExcelService {
                 sheet.setColumnWidth(i, 4000);
             }
 
-            // Create 10 empty rows with data style
-            for (int i = 1; i <= 10; i++) {
+            // Create sample data rows
+            String[][] sampleData = {
+                    {"Honda XR150L", "33D1-99765", "Xe cao cấp", "Chi nhánh trung tâm", "300000", "40000", "Nguyên vẹn", "12000", "Hoạt động", "Xe hoạt động tốt", "2010", "Hà Nội"},
+                    {"Honda Winner 150", "33L1-34568", "Xe tay côn", "Chi nhánh trung tâm", "350000", "50000", "Nguyên vẹn", "13000", "Hoạt động", "", "2011", "Hà Nội"},
+                    {"Honda Vision", "33G1-55666", "Xe ga", "Chi nhánh trung tâm", "400000", "40000", "Nguyên vẹn", "12000", "Hoạt động", "", "2010", "Hà Nội"},
+                    {"Honda Wave Alpha", "33N1-22222", "Xe số", "Chi nhánh trung tâm", "400000", "50000", "Nguyên vẹn", "13000", "Hoạt động", "", "2011", "Hà Nội"}
+            };
+
+            // Populate sample data rows
+            for (int i = 0; i < sampleData.length; i++) {
+                Row row = sheet.createRow(i + 1);
+                String[] rowData = sampleData[i];
+                for (int j = 0; j < HEADERS.length; j++) {
+                    Cell cell = row.createCell(j);
+                    cell.setCellStyle(dataStyle);
+                    
+                    if (j < rowData.length && !rowData[j].isEmpty()) {
+                        // Columns with numbers: Giá ngày (4), Giá giờ (5), Odometer (7), Năm SX (10)
+                        if (j == 4 || j == 5 || j == 7 || j == 10) {
+                            try {
+                                cell.setCellValue(Double.parseDouble(rowData[j]));
+                            } catch (NumberFormatException e) {
+                                cell.setCellValue(rowData[j]);
+                            }
+                        } else {
+                            cell.setCellValue(rowData[j]);
+                        }
+                    }
+                }
+            }
+
+            // Create additional empty rows (6 more rows for total 10 rows)
+            for (int i = sampleData.length + 1; i <= 10; i++) {
                 Row row = sheet.createRow(i);
                 for (int j = 0; j < HEADERS.length; j++) {
                     Cell cell = row.createCell(j);
@@ -150,7 +181,7 @@ public class CarExcelServiceImpl implements CarExcelService {
             for (CarSaveDTO carDTO : carsToSave) {
                 CarEntity existing = carRepository.findByLicensePlate(carDTO.getLicensePlate());
                 if (existing != null) {
-                    throw new RuntimeException("Biển số xe " + carDTO.getLicensePlate() + " đã tồn tại trong hệ thống");
+                    throw new RuntimeException("Xảy ra lỗi trùng dữ liệu biến số xe nên không thể import xe");
                 }
             }
 
@@ -293,11 +324,13 @@ public class CarExcelServiceImpl implements CarExcelService {
         addDropdownWithFormula(sheet, validationHelper, 1, 10, 6, 6,
                 "Dropdowns!$D$1:$D$" + conditions.size());
 
-        // Column E: Trạng thái (CAR_STATUSES)
+        // Column E: Trạng thái (CAR_STATUSES) - Đầy đủ 5 trạng thái
         List<String> statuses = Arrays.asList(
-                CarStatus.AVAILABLE.getDescription(),
-                CarStatus.NOT_AVAILABLE.getDescription(),
-                CarStatus.LOST.getDescription()
+                CarStatus.AVAILABLE.getDescription(),        // Hoạt động
+                CarStatus.NOT_AVAILABLE.getDescription(),     // Không sẵn sàng
+                CarStatus.MAINTENANCE.getDescription(),      // Đang bảo dưỡng
+                CarStatus.BROKEN.getDescription(),            // Hỏng hóc
+                CarStatus.LOST.getDescription()               // Bị mất
         );
         createDropdownList(hiddenSheet, 4, statuses);
         addDropdownWithFormula(sheet, validationHelper, 1, 10, 8, 8,

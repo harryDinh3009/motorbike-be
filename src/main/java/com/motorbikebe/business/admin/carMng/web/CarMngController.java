@@ -267,11 +267,19 @@ public class CarMngController {
      */
     @PostMapping(value = "/import-excel", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ApiResponse<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) {
-        Integer count = carExcelService.importExcel(file);
-        Map<String, Object> response = new HashMap<>();
-        response.put("count", count);
-        response.put("message", "Import thành công " + count + " xe");
-        return new ApiResponse<>(ApiStatus.SUCCESS, response);
+        try {
+            Integer count = carExcelService.importExcel(file);
+            Map<String, Object> response = new HashMap<>();
+            response.put("count", count);
+            response.put("message", "Import thành công " + count + " xe");
+            return new ApiResponse<>(ApiStatus.SUCCESS, response);
+        } catch (RuntimeException e) {
+            // Handle import errors (duplicate license plate, validation errors, etc.)
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("count", 0);
+            errorResponse.put("message", e.getMessage());
+            return new ApiResponse<>(ApiStatus.BAD_REQUEST, errorResponse, e.getMessage());
+        }
     }
 
     /**
