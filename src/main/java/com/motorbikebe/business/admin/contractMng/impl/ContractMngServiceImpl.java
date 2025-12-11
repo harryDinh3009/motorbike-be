@@ -1257,6 +1257,22 @@ public class ContractMngServiceImpl implements ContractMngService {
     // ========== Helper Methods ==========
 
     /**
+     * Set time to start of day (00:00:00.000) for date filtering
+     */
+    private Date setStartOfDay(Date date) {
+        if (date == null) {
+            return null;
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    /**
      * Set time to end of day (23:59:59.999) for date filtering
      */
     private Date setEndOfDay(Date date) {
@@ -1469,5 +1485,71 @@ public class ContractMngServiceImpl implements ContractMngService {
         }
         
         return result;
+    }
+
+    // ========== Delivery & Pickup Management ==========
+
+    @Override
+    public PageableObject<ContractDTO> searchDeliveryContracts(DeliveryPickupSearchDTO searchDTO) {
+        // Set start date to start of day (00:00:00)
+        if (searchDTO.getDateFrom() != null) {
+            searchDTO.setDateFrom(setStartOfDay(searchDTO.getDateFrom()));
+        }
+        // Set end date to end of day (23:59:59)
+        if (searchDTO.getDateTo() != null) {
+            searchDTO.setDateTo(setEndOfDay(searchDTO.getDateTo()));
+        }
+        
+        Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
+        Page<ContractDTO> contractPage = contractRepository.searchDeliveryContracts(pageable, searchDTO);
+
+        // Set status description and load cars for each contract
+        contractPage.forEach(contract -> {
+            if (contract.getStatus() != null) {
+                contract.setStatusNm(contract.getStatus().getDescription());
+            }
+            // Load cars information for each contract
+            List<ContractCarDTO> cars = getContractCars(contract.getId());
+            contract.setCars(cars);
+        });
+
+        return PageableObject.<ContractDTO>builder()
+                .data(contractPage.getContent())
+                .totalRecords(contractPage.getTotalElements())
+                .currentPage(searchDTO.getPage())
+                .totalPages(contractPage.getTotalPages())
+                .build();
+    }
+
+    @Override
+    public PageableObject<ContractDTO> searchPickupContracts(DeliveryPickupSearchDTO searchDTO) {
+        // Set start date to start of day (00:00:00)
+        if (searchDTO.getDateFrom() != null) {
+            searchDTO.setDateFrom(setStartOfDay(searchDTO.getDateFrom()));
+        }
+        // Set end date to end of day (23:59:59)
+        if (searchDTO.getDateTo() != null) {
+            searchDTO.setDateTo(setEndOfDay(searchDTO.getDateTo()));
+        }
+        
+        Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
+        Page<ContractDTO> contractPage = contractRepository.searchPickupContracts(pageable, searchDTO);
+
+        // Set status description and load cars for each contract
+        contractPage.forEach(contract -> {
+            if (contract.getStatus() != null) {
+                contract.setStatusNm(contract.getStatus().getDescription());
+            }
+            // Load cars information for each contract
+            List<ContractCarDTO> cars = getContractCars(contract.getId());
+            contract.setCars(cars);
+        });
+
+        return PageableObject.<ContractDTO>builder()
+                .data(contractPage.getContent())
+                .totalRecords(contractPage.getTotalElements())
+                .currentPage(searchDTO.getPage())
+                .totalPages(contractPage.getTotalPages())
+                .build();
     }
 }

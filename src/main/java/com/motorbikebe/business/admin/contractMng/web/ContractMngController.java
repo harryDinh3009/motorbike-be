@@ -222,6 +222,15 @@ public class ContractMngController {
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }
 
+    /**
+     * Tìm kiếm hợp đồng chờ giao xe (tối ưu)
+     */
+    @PostMapping("/delivery/list")
+    public ApiResponse<PageableObject<ContractDTO>> searchDeliveryContracts(@RequestBody DeliveryPickupSearchDTO searchDTO) {
+        PageableObject<ContractDTO> pageableRes = contractMngService.searchDeliveryContracts(searchDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, pageableRes);
+    }
+
     // ========== Return Process ==========
 
     /**
@@ -258,6 +267,15 @@ public class ContractMngController {
         response.put("message", "Upload thành công " + imageUrls.size() + " ảnh");
         
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
+    }
+
+    /**
+     * Tìm kiếm hợp đồng chờ nhận xe (tối ưu)
+     */
+    @PostMapping("/pickup/list")
+    public ApiResponse<PageableObject<ContractDTO>> searchPickupContracts(@RequestBody DeliveryPickupSearchDTO searchDTO) {
+        PageableObject<ContractDTO> pageableRes = contractMngService.searchPickupContracts(searchDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, pageableRes);
     }
 
     // ========== Complete Contract ==========

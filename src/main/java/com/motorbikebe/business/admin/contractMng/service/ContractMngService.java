@@ -160,4 +160,16 @@ public interface ContractMngService {
      * Trả về Map<carId, isAvailable>
      */
     java.util.Map<String, Boolean> checkCarsAvailability(CheckCarsAvailabilityDTO requestDTO);
+
+    // ========== Delivery & Pickup Management ==========
+
+    /**
+     * Tìm kiếm hợp đồng chờ giao xe (tối ưu)
+     */
+    PageableObject<ContractDTO> searchDeliveryContracts(DeliveryPickupSearchDTO searchDTO);
+
+    /**
+     * Tìm kiếm hợp đồng chờ nhận xe (tối ưu)
+     */
+    PageableObject<ContractDTO> searchPickupContracts(DeliveryPickupSearchDTO searchDTO);
 }

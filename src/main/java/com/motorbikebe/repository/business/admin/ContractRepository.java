@@ -3,6 +3,7 @@ package com.motorbikebe.repository.business.admin;
 import com.motorbikebe.constant.enumconstant.ContractStatus;
 import com.motorbikebe.dto.business.admin.contractMng.ContractDTO;
 import com.motorbikebe.dto.business.admin.contractMng.ContractSearchDTO;
+import com.motorbikebe.dto.business.admin.contractMng.DeliveryPickupSearchDTO;
 import com.motorbikebe.dto.business.admin.contractMng.MonthlyRevenueRowDTO;
 import com.motorbikebe.entity.domain.ContractEntity;
 import com.motorbikebe.repository.projection.ContractRevenueProjection;
@@ -378,6 +379,172 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                                              @Param("status") String status,
                                              @Param("startDate") Date startDate,
                                              @Param("endDate") Date endDate);
+
+    /**
+     * Tìm hợp đồng chờ giao xe (tối ưu)
+     * Logic: 
+     * - status = CONFIRMED và delivery_time IS NULL (chưa giao)
+     * - HOẶC status = DELIVERED/RETURNED/COMPLETED và delivery_time IS NOT NULL (đã giao)
+     * Filter theo deliveryStatus:
+     * - "delivered": chỉ lấy đã giao (delivery_time IS NOT NULL)
+     * - "not_delivered": chỉ lấy chưa giao (delivery_time IS NULL AND status = 'CONFIRMED')
+     * - "all" hoặc null: lấy cả hai
+     */
+    @Query(value = """
+            SELECT con.id,
+                   con.contract_code AS contractCode,
+                   con.customer_id AS customerId,
+                   cus.full_name AS customerName,
+                   cus.phone_number AS phoneNumber,
+                   cus.email,
+                   con.source,
+                   con.start_date AS startDate,
+                   con.end_date AS endDate,
+                   con.pickup_branch_id AS pickupBranchId,
+                   pb.name AS pickupBranchName,
+                   con.return_branch_id AS returnBranchId,
+                   rb.name AS returnBranchName,
+                   con.pickup_address AS pickupAddress,
+                   con.return_address AS returnAddress,
+                   con.total_rental_amount AS totalRentalAmount,
+                   con.total_surcharge AS totalSurcharge,
+                   con.discount_amount AS discountAmount,
+                   con.final_amount AS finalAmount,
+                   con.paid_amount AS paidAmount,
+                   con.remaining_amount AS remainingAmount,
+                   con.status,
+                   con.notes,
+                   con.delivery_time AS deliveryTime,
+                   con.return_time AS returnTime,
+                   con.completed_date AS completedDate
+            FROM contract con
+            INNER JOIN customer cus ON con.customer_id = cus.id
+            LEFT JOIN branch pb ON con.pickup_branch_id = pb.id
+            LEFT JOIN branch rb ON con.return_branch_id = rb.id
+            WHERE con.status <> 'CANCELLED'
+              AND (
+                (con.status = 'CONFIRMED' AND con.delivery_time IS NULL)
+                OR (con.status IN ('DELIVERED', 'RETURNED', 'COMPLETED') AND con.delivery_time IS NOT NULL)
+              )
+              AND (:#{#req.keyword} IS NULL OR :#{#req.keyword} = ''
+                   OR con.contract_code LIKE CONCAT('%', :#{#req.keyword}, '%')
+                   OR cus.full_name LIKE CONCAT('%', :#{#req.keyword}, '%')
+                   OR cus.phone_number LIKE CONCAT('%', :#{#req.keyword}, '%'))
+              AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR con.pickup_branch_id = :#{#req.branchId})
+              AND (:#{#req.dateFrom} IS NULL OR con.start_date >= :#{#req.dateFrom})
+              AND (:#{#req.dateTo} IS NULL OR con.start_date <= :#{#req.dateTo})
+              AND (
+                :#{#req.status} IS NULL OR :#{#req.status} = '' OR :#{#req.status} = 'all'
+                OR (:#{#req.status} = 'delivered' AND con.delivery_time IS NOT NULL)
+                OR (:#{#req.status} = 'not_delivered' AND con.delivery_time IS NULL AND con.status = 'CONFIRMED')
+              )
+            ORDER BY con.start_date DESC, con.created_date DESC
+            """, countQuery = """
+            SELECT COUNT(con.id)
+            FROM contract con
+            INNER JOIN customer cus ON con.customer_id = cus.id
+            WHERE con.status <> 'CANCELLED'
+              AND (
+                (con.status = 'CONFIRMED' AND con.delivery_time IS NULL)
+                OR (con.status IN ('DELIVERED', 'RETURNED', 'COMPLETED') AND con.delivery_time IS NOT NULL)
+              )
+              AND (:#{#req.keyword} IS NULL OR :#{#req.keyword} = ''
+                   OR con.contract_code LIKE CONCAT('%', :#{#req.keyword}, '%')
+                   OR cus.full_name LIKE CONCAT('%', :#{#req.keyword}, '%')
+                   OR cus.phone_number LIKE CONCAT('%', :#{#req.keyword}, '%'))
+              AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR con.pickup_branch_id = :#{#req.branchId})
+              AND (:#{#req.dateFrom} IS NULL OR con.start_date >= :#{#req.dateFrom})
+              AND (:#{#req.dateTo} IS NULL OR con.start_date <= :#{#req.dateTo})
+              AND (
+                :#{#req.status} IS NULL OR :#{#req.status} = '' OR :#{#req.status} = 'all'
+                OR (:#{#req.status} = 'delivered' AND con.delivery_time IS NOT NULL)
+                OR (:#{#req.status} = 'not_delivered' AND con.delivery_time IS NULL AND con.status = 'CONFIRMED')
+              )
+            """, nativeQuery = true)
+    Page<ContractDTO> searchDeliveryContracts(Pageable pageable, @Param("req") DeliveryPickupSearchDTO req);
+
+    /**
+     * Tìm hợp đồng chờ nhận xe (tối ưu)
+     * Logic:
+     * - status = DELIVERED và return_time IS NULL (chưa nhận)
+     * - HOẶC status = RETURNED/COMPLETED và return_time IS NOT NULL (đã nhận)
+     * Filter theo pickupStatus:
+     * - "received": chỉ lấy đã nhận (return_time IS NOT NULL)
+     * - "not_received": chỉ lấy chưa nhận (return_time IS NULL AND status = 'DELIVERED')
+     * - "all" hoặc null: lấy cả hai
+     */
+    @Query(value = """
+            SELECT con.id,
+                   con.contract_code AS contractCode,
+                   con.customer_id AS customerId,
+                   cus.full_name AS customerName,
+                   cus.phone_number AS phoneNumber,
+                   cus.email,
+                   con.source,
+                   con.start_date AS startDate,
+                   con.end_date AS endDate,
+                   con.pickup_branch_id AS pickupBranchId,
+                   pb.name AS pickupBranchName,
+                   con.return_branch_id AS returnBranchId,
+                   rb.name AS returnBranchName,
+                   con.pickup_address AS pickupAddress,
+                   con.return_address AS returnAddress,
+                   con.total_rental_amount AS totalRentalAmount,
+                   con.total_surcharge AS totalSurcharge,
+                   con.discount_amount AS discountAmount,
+                   con.final_amount AS finalAmount,
+                   con.paid_amount AS paidAmount,
+                   con.remaining_amount AS remainingAmount,
+                   con.status,
+                   con.notes,
+                   con.delivery_time AS deliveryTime,
+                   con.return_time AS returnTime,
+                   con.completed_date AS completedDate
+            FROM contract con
+            INNER JOIN customer cus ON con.customer_id = cus.id
+            LEFT JOIN branch pb ON con.pickup_branch_id = pb.id
+            LEFT JOIN branch rb ON con.return_branch_id = rb.id
+            WHERE con.status <> 'CANCELLED'
+              AND (
+                (con.status = 'DELIVERED' AND con.return_time IS NULL)
+                OR (con.status IN ('RETURNED', 'COMPLETED') AND con.return_time IS NOT NULL)
+              )
+              AND (:#{#req.keyword} IS NULL OR :#{#req.keyword} = ''
+                   OR con.contract_code LIKE CONCAT('%', :#{#req.keyword}, '%')
+                   OR cus.full_name LIKE CONCAT('%', :#{#req.keyword}, '%')
+                   OR cus.phone_number LIKE CONCAT('%', :#{#req.keyword}, '%'))
+              AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR con.return_branch_id = :#{#req.branchId})
+              AND (:#{#req.dateFrom} IS NULL OR con.end_date >= :#{#req.dateFrom})
+              AND (:#{#req.dateTo} IS NULL OR con.end_date <= :#{#req.dateTo})
+              AND (
+                :#{#req.status} IS NULL OR :#{#req.status} = '' OR :#{#req.status} = 'all'
+                OR (:#{#req.status} = 'received' AND con.return_time IS NOT NULL)
+                OR (:#{#req.status} = 'not_received' AND con.return_time IS NULL AND con.status = 'DELIVERED')
+              )
+            ORDER BY con.end_date DESC, con.created_date DESC
+            """, countQuery = """
+            SELECT COUNT(con.id)
+            FROM contract con
+            INNER JOIN customer cus ON con.customer_id = cus.id
+            WHERE con.status <> 'CANCELLED'
+              AND (
+                (con.status = 'DELIVERED' AND con.return_time IS NULL)
+                OR (con.status IN ('RETURNED', 'COMPLETED') AND con.return_time IS NOT NULL)
+              )
+              AND (:#{#req.keyword} IS NULL OR :#{#req.keyword} = ''
+                   OR con.contract_code LIKE CONCAT('%', :#{#req.keyword}, '%')
+                   OR cus.full_name LIKE CONCAT('%', :#{#req.keyword}, '%')
+                   OR cus.phone_number LIKE CONCAT('%', :#{#req.keyword}, '%'))
+              AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR con.return_branch_id = :#{#req.branchId})
+              AND (:#{#req.dateFrom} IS NULL OR con.end_date >= :#{#req.dateFrom})
+              AND (:#{#req.dateTo} IS NULL OR con.end_date <= :#{#req.dateTo})
+              AND (
+                :#{#req.status} IS NULL OR :#{#req.status} = '' OR :#{#req.status} = 'all'
+                OR (:#{#req.status} = 'received' AND con.return_time IS NOT NULL)
+                OR (:#{#req.status} = 'not_received' AND con.return_time IS NULL AND con.status = 'DELIVERED')
+              )
+            """, nativeQuery = true)
+    Page<ContractDTO> searchPickupContracts(Pageable pageable, @Param("req") DeliveryPickupSearchDTO req);
 
 }
 
