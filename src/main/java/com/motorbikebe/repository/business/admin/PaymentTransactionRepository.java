@@ -30,6 +30,7 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             FROM payment_transaction pt
             LEFT JOIN user u ON pt.user_id = u.id
             WHERE pt.contract_id = :contractId
+              AND pt.status = 'SUCCESS'
             ORDER BY pt.payment_date DESC
             """, nativeQuery = true)
     List<PaymentTransactionDTO> findByContractIdWithEmployee(@Param("contractId") String contractId);

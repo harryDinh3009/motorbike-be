@@ -513,10 +513,14 @@ public class ContractMngServiceImpl implements ContractMngService {
             throw new RestApiException(ApiStatus.NOT_FOUND);
         }
 
-        String contractId = paymentOpt.get().getContractId();
-        paymentTransactionRepository.deleteById(id);
+        PaymentTransactionEntity payment = paymentOpt.get();
+        
+        // Thay vì xóa, chỉ cập nhật status thành CANCELLED
+        payment.setStatus("CANCELLED");
+        paymentTransactionRepository.save(payment);
 
-        // Update contract paid amount
+        String contractId = payment.getContractId();
+        // Update contract paid amount (sẽ tự động loại trừ payment CANCELLED vì query đã filter)
         updateContractTotals(contractId);
         return true;
     }
