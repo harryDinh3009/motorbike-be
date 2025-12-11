@@ -309,14 +309,13 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
      * Chỉ lấy mẫu xe đã được thuê trong khoảng thời gian
      */
     @Query(value = """
-            SELECT 
-                c.model AS modelName,
-                COUNT(cc.id) AS rentalCount,
-                COALESCE(SUM(cc.total_amount), 0) AS rentalAmount
+            SELECT c.model AS modelName,
+                   COUNT(DISTINCT con.id) AS rentalCount,
+                   SUM(con.total_rental_amount) AS rentalAmount
             FROM contract_car cc
             INNER JOIN contract con ON cc.contract_id = con.id
             INNER JOIN car c ON cc.car_id = c.id
-            WHERE con.status = 'COMPLETED'
+            WHERE con.status IN ('DELIVERED', 'RETURNED', 'COMPLETED')
               AND con.completed_date IS NOT NULL
               AND DATE(con.completed_date) >= DATE(:startDate)
               AND DATE(con.completed_date) <= DATE(:endDate)

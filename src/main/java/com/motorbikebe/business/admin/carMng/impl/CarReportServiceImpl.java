@@ -124,14 +124,14 @@ public class CarReportServiceImpl implements CarReportService {
             Table table = new Table(columnWidths);
             table.setWidth(UnitValue.createPercentValue(100));
 
-            addHeaderCell(table, "STT", font, fontBold);
-            addHeaderCell(table, "Mẫu xe", font, fontBold);
-            addHeaderCell(table, "Biển số", font, fontBold);
-            addHeaderCell(table, "Chi nhánh", font, fontBold);
-            addHeaderCell(table, "Loại xe", font, fontBold);
-            addHeaderCell(table, "Tình trạng", font, fontBold);
-            addHeaderCell(table, "Giá ngày", font, fontBold);
-            addHeaderCell(table, "Giá giờ", font, fontBold);
+            addHeaderCell(table, "STT", font, fontBold); // Căn giữa cho STT
+            addLeftAlignedHeaderCell(table, "Mẫu xe", font, fontBold);
+            addLeftAlignedHeaderCell(table, "Biển số", font, fontBold);
+            addLeftAlignedHeaderCell(table, "Chi nhánh", font, fontBold);
+            addLeftAlignedHeaderCell(table, "Loại xe", font, fontBold);
+            addLeftAlignedHeaderCell(table, "Tình trạng", font, fontBold);
+            addRightAlignedHeaderCell(table, "Giá ngày", font, fontBold);
+            addRightAlignedHeaderCell(table, "Giá giờ", font, fontBold);
 
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
 
@@ -143,14 +143,14 @@ public class CarReportServiceImpl implements CarReportService {
             } else {
                 int index = 1;
                 for (CarDTO car : availableCars) {
-                    table.addCell(createBodyCell(String.valueOf(index++), font));
+                    table.addCell(createBodyCell(String.valueOf(index++), font).setTextAlignment(TextAlignment.CENTER)); // Căn giữa cho STT
                     table.addCell(createBodyCell(defaultString(car.getModel()), font));
                     table.addCell(createBodyCell(defaultString(car.getLicensePlate()), font));
                     table.addCell(createBodyCell(defaultString(car.getBranchName()), font));
                     table.addCell(createBodyCell(defaultString(car.getCarType()), font));
                     table.addCell(createBodyCell(defaultString(car.getCondition()), font));
-                    table.addCell(createBodyCell(formatCurrency(car.getDailyPrice(), currencyFormat), font));
-                    table.addCell(createBodyCell(formatCurrency(car.getHourlyPrice(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(car.getDailyPrice(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(car.getHourlyPrice(), currencyFormat), font));
                 }
             }
 
@@ -186,10 +186,30 @@ public class CarReportServiceImpl implements CarReportService {
         table.addCell(cell);
     }
 
+    private void addLeftAlignedHeaderCell(Table table, String text, PdfFont font, PdfFont fontBold) {
+        Cell cell = new Cell()
+                .add(new Paragraph(text).setFont(fontBold).setFontSize(11))
+                .setTextAlignment(TextAlignment.LEFT);
+        table.addCell(cell);
+    }
+
+    private void addRightAlignedHeaderCell(Table table, String text, PdfFont font, PdfFont fontBold) {
+        Cell cell = new Cell()
+                .add(new Paragraph(text).setFont(fontBold).setFontSize(11))
+                .setTextAlignment(TextAlignment.RIGHT);
+        table.addCell(cell);
+    }
+
     private Cell createBodyCell(String text, PdfFont font) {
         return new Cell()
                 .add(new Paragraph(text).setFont(font).setFontSize(10))
                 .setTextAlignment(TextAlignment.LEFT);
+    }
+
+    private Cell createRightAlignedCell(String text, PdfFont font) {
+        return new Cell()
+                .add(new Paragraph(text).setFont(font).setFontSize(10))
+                .setTextAlignment(TextAlignment.RIGHT);
     }
 
     private Cell createSignCell(String text, PdfFont font) {
@@ -291,14 +311,14 @@ public class CarReportServiceImpl implements CarReportService {
             Table table = new Table(columnWidths);
             table.setWidth(UnitValue.createPercentValue(100));
 
-            addHeaderCell(table, "STT", font, fontBold);
-            addHeaderCell(table, "Mẫu xe", font, fontBold);
-            addHeaderCell(table, "Biển số", font, fontBold);
-            addHeaderCell(table, "Chi nhánh", font, fontBold);
-            addHeaderCell(table, "Loại xe", font, fontBold);
-            addHeaderCell(table, "Tình trạng", font, fontBold);
-            addHeaderCell(table, "Giá ngày", font, fontBold);
-            addHeaderCell(table, "Giá giờ", font, fontBold);
+            addHeaderCell(table, "STT", font, fontBold); // Căn giữa cho STT
+            addLeftAlignedHeaderCell(table, "Mẫu xe", font, fontBold);
+            addLeftAlignedHeaderCell(table, "Biển số", font, fontBold);
+            addLeftAlignedHeaderCell(table, "Chi nhánh", font, fontBold);
+            addLeftAlignedHeaderCell(table, "Loại xe", font, fontBold);
+            addLeftAlignedHeaderCell(table, "Tình trạng", font, fontBold);
+            addRightAlignedHeaderCell(table, "Giá ngày", font, fontBold);
+            addRightAlignedHeaderCell(table, "Giá giờ", font, fontBold);
 
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
 
@@ -310,14 +330,14 @@ public class CarReportServiceImpl implements CarReportService {
             } else {
                 int index = 1;
                 for (CarDTO car : rentableCars) {
-                    table.addCell(createBodyCell(String.valueOf(index++), font));
+                    table.addCell(createBodyCell(String.valueOf(index++), font).setTextAlignment(TextAlignment.CENTER)); // Căn giữa cho STT
                     table.addCell(createBodyCell(defaultString(car.getModel()), font));
                     table.addCell(createBodyCell(defaultString(car.getLicensePlate()), font));
                     table.addCell(createBodyCell(defaultString(car.getBranchName()), font));
                     table.addCell(createBodyCell(defaultString(car.getCarType()), font));
                     table.addCell(createBodyCell(defaultString(car.getCondition()), font));
-                    table.addCell(createBodyCell(formatCurrency(car.getDailyPrice(), currencyFormat), font));
-                    table.addCell(createBodyCell(formatCurrency(car.getHourlyPrice(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(car.getDailyPrice(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(car.getHourlyPrice(), currencyFormat), font));
                 }
             }
 

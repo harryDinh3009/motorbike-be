@@ -119,12 +119,12 @@ public class ContractReportServiceImpl implements ContractReportService {
             Table table = new Table(columnWidths);
             table.setWidth(UnitValue.createPercentValue(100));
 
-            addHeaderCell(table, "Tháng", fontBold);
-            addHeaderCell(table, "Số HĐ hoàn thành", fontBold);
-            addHeaderCell(table, "Tiền thuê xe", fontBold);
-            addHeaderCell(table, "Tiền phụ thu", fontBold);
-            addHeaderCell(table, "Giảm giá", fontBold);
-            addHeaderCell(table, "Tổng doanh thu", fontBold);
+            addHeaderCell(table, "Tháng", fontBold); // Căn giữa
+            addHeaderCell(table, "Số HĐ hoàn thành", fontBold); // Căn giữa
+            addRightAlignedHeaderCell(table, "Tiền thuê xe", fontBold);
+            addRightAlignedHeaderCell(table, "Tiền phụ thu", fontBold);
+            addRightAlignedHeaderCell(table, "Giảm giá", fontBold);
+            addRightAlignedHeaderCell(table, "Tổng doanh thu", fontBold);
 
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
 
@@ -141,12 +141,12 @@ public class ContractReportServiceImpl implements ContractReportService {
                 table.addCell(emptyCell);
             } else {
                 for (MonthlyRevenueRowDTO row : rows) {
-                    table.addCell(createBodyCell(String.valueOf(row.getMonth()), font));
-                    table.addCell(createBodyCell(String.valueOf(row.getContractCount()), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getRentalAmount(), currencyFormat), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getSurchargeAmount(), currencyFormat), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getDiscountAmount(), currencyFormat), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getRevenue(), currencyFormat), font));
+                    table.addCell(createBodyCell(String.valueOf(row.getMonth()), font)); // Căn giữa
+                    table.addCell(createBodyCell(String.valueOf(row.getContractCount()), font)); // Căn giữa
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getRentalAmount(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getSurchargeAmount(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getDiscountAmount(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getRevenue(), currencyFormat), font));
 
                     totalContracts += row.getContractCount();
                     totalRental = totalRental.add(orZero(row.getRentalAmount()));
@@ -155,12 +155,12 @@ public class ContractReportServiceImpl implements ContractReportService {
                     totalRevenue = totalRevenue.add(orZero(row.getRevenue()));
                 }
 
-                table.addCell(createFooterCell("Tổng", fontBold));
-                table.addCell(createFooterCell(String.valueOf(totalContracts), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalRental, currencyFormat), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalSurcharge, currencyFormat), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalDiscount, currencyFormat), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalRevenue, currencyFormat), fontBold));
+                table.addCell(createFooterCell("Tổng", fontBold).setTextAlignment(TextAlignment.LEFT));
+                table.addCell(createFooterCell(String.valueOf(totalContracts), fontBold)); // Căn giữa
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalRental, currencyFormat), fontBold));
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalSurcharge, currencyFormat), fontBold));
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalDiscount, currencyFormat), fontBold));
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalRevenue, currencyFormat), fontBold));
             }
 
             document.add(table);
@@ -230,16 +230,36 @@ public class ContractReportServiceImpl implements ContractReportService {
         table.addCell(new Cell().add(new Paragraph(text).setFont(font).setFontSize(11)).setTextAlignment(TextAlignment.CENTER));
     }
 
+    private void addLeftAlignedHeaderCell(Table table, String text, PdfFont font) {
+        table.addCell(new Cell().add(new Paragraph(text).setFont(font).setFontSize(11)).setTextAlignment(TextAlignment.LEFT));
+    }
+
+    private void addRightAlignedHeaderCell(Table table, String text, PdfFont font) {
+        table.addCell(new Cell().add(new Paragraph(text).setFont(font).setFontSize(11)).setTextAlignment(TextAlignment.RIGHT));
+    }
+
     private Cell createBodyCell(String text, PdfFont font) {
         return new Cell()
                 .add(new Paragraph(text).setFont(font).setFontSize(10))
                 .setTextAlignment(TextAlignment.CENTER);
     }
 
+    private Cell createRightAlignedCell(String text, PdfFont font) {
+        return new Cell()
+                .add(new Paragraph(text).setFont(font).setFontSize(10))
+                .setTextAlignment(TextAlignment.RIGHT);
+    }
+
     private Cell createFooterCell(String text, PdfFont font) {
         return new Cell()
                 .add(new Paragraph(text).setFont(font).setFontSize(11))
                 .setTextAlignment(TextAlignment.CENTER);
+    }
+
+    private Cell createRightAlignedFooterCell(String text, PdfFont font) {
+        return new Cell()
+                .add(new Paragraph(text).setFont(font).setFontSize(11))
+                .setTextAlignment(TextAlignment.RIGHT);
     }
 
     private Cell createSignCell(String text, PdfFont font) {
@@ -341,12 +361,12 @@ public class ContractReportServiceImpl implements ContractReportService {
             Table table = new Table(columnWidths);
             table.setWidth(UnitValue.createPercentValue(100));
 
-            addHeaderCell(table, "Ngày", fontBold);
-            addHeaderCell(table, "Số HĐ hoàn thành", fontBold);
-            addHeaderCell(table, "Tiền thuê xe", fontBold);
-            addHeaderCell(table, "Tiền phụ thu", fontBold);
-            addHeaderCell(table, "Giảm giá", fontBold);
-            addHeaderCell(table, "Tổng doanh thu", fontBold);
+            addHeaderCell(table, "Ngày", fontBold); // Căn giữa
+            addHeaderCell(table, "Số HĐ hoàn thành", fontBold); // Căn giữa
+            addRightAlignedHeaderCell(table, "Tiền thuê xe", fontBold);
+            addRightAlignedHeaderCell(table, "Tiền phụ thu", fontBold);
+            addRightAlignedHeaderCell(table, "Giảm giá", fontBold);
+            addRightAlignedHeaderCell(table, "Tổng doanh thu", fontBold);
 
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -364,12 +384,12 @@ public class ContractReportServiceImpl implements ContractReportService {
                 table.addCell(emptyCell);
             } else {
                 for (DailyRevenueRowDTO row : rows) {
-                    table.addCell(createBodyCell(row.getDate().format(dateFormatter), font));
-                    table.addCell(createBodyCell(String.valueOf(row.getContractCount()), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getRentalAmount(), currencyFormat), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getSurchargeAmount(), currencyFormat), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getDiscountAmount(), currencyFormat), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getRevenue(), currencyFormat), font));
+                    table.addCell(createBodyCell(row.getDate().format(dateFormatter), font)); // Căn giữa
+                    table.addCell(createBodyCell(String.valueOf(row.getContractCount()), font)); // Căn giữa
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getRentalAmount(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getSurchargeAmount(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getDiscountAmount(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getRevenue(), currencyFormat), font));
 
                     totalContracts += row.getContractCount();
                     totalRental = totalRental.add(orZero(row.getRentalAmount()));
@@ -379,12 +399,12 @@ public class ContractReportServiceImpl implements ContractReportService {
                 }
 
                 // Total row
-                table.addCell(createFooterCell("Tổng", fontBold));
-                table.addCell(createFooterCell(String.valueOf(totalContracts), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalRental, currencyFormat), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalSurcharge, currencyFormat), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalDiscount, currencyFormat), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalRevenue, currencyFormat), fontBold));
+                table.addCell(createFooterCell("Tổng", fontBold)); // Căn giữa
+                table.addCell(createFooterCell(String.valueOf(totalContracts), fontBold)); // Căn giữa
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalRental, currencyFormat), fontBold));
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalSurcharge, currencyFormat), fontBold));
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalDiscount, currencyFormat), fontBold));
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalRevenue, currencyFormat), fontBold));
             }
 
             document.add(table);
@@ -533,10 +553,10 @@ public class ContractReportServiceImpl implements ContractReportService {
             Table table = new Table(columnWidths);
             table.setWidth(UnitValue.createPercentValue(100));
 
-            addHeaderCell(table, "STT", fontBold);
-            addHeaderCell(table, "Mẫu xe", fontBold);
-            addHeaderCell(table, "Số lượt thuê", fontBold);
-            addHeaderCell(table, "Tiền thuê xe", fontBold);
+            addHeaderCell(table, "STT", fontBold); // Căn giữa cho STT
+            addLeftAlignedHeaderCell(table, "Mẫu xe", fontBold);
+            addRightAlignedHeaderCell(table, "Số lượt thuê", fontBold);
+            addRightAlignedHeaderCell(table, "Tiền thuê xe", fontBold);
 
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
 
@@ -550,10 +570,10 @@ public class ContractReportServiceImpl implements ContractReportService {
                 table.addCell(emptyCell);
             } else {
                 for (ModelRentalRowDTO row : rows) {
-                    table.addCell(createBodyCell(String.valueOf(row.getStt()), font));
+                    table.addCell(createBodyCell(String.valueOf(row.getStt()), font)); // Căn giữa cho STT
                     table.addCell(createBodyCell(row.getModelName(), font).setTextAlignment(TextAlignment.LEFT));
-                    table.addCell(createBodyCell(String.valueOf(row.getRentalCount()), font));
-                    table.addCell(createBodyCell(formatCurrency(row.getRentalAmount(), currencyFormat), font));
+                    table.addCell(createRightAlignedCell(String.valueOf(row.getRentalCount()), font));
+                    table.addCell(createRightAlignedCell(formatCurrency(row.getRentalAmount(), currencyFormat), font));
 
                     totalRentalCount += row.getRentalCount();
                     totalRentalAmount = totalRentalAmount.add(orZero(row.getRentalAmount()));
@@ -562,8 +582,8 @@ public class ContractReportServiceImpl implements ContractReportService {
                 // Total row
                 table.addCell(createFooterCell("", fontBold));
                 table.addCell(createFooterCell("Tổng", fontBold).setTextAlignment(TextAlignment.LEFT));
-                table.addCell(createFooterCell(String.valueOf(totalRentalCount), fontBold));
-                table.addCell(createFooterCell(formatCurrency(totalRentalAmount, currencyFormat), fontBold));
+                table.addCell(createRightAlignedFooterCell(String.valueOf(totalRentalCount), fontBold));
+                table.addCell(createRightAlignedFooterCell(formatCurrency(totalRentalAmount, currencyFormat), fontBold));
             }
 
             document.add(table);
