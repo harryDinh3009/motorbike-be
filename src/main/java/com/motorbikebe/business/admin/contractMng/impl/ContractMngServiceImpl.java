@@ -735,13 +735,14 @@ public class ContractMngServiceImpl implements ContractMngService {
         // Update cars odometer and return status
         for (ContractCarSaveDTO carDTO : returnDTO.getCars()) {
             if (carDTO.getId() != null) {
-                // Update contract_car: end_odometer and return_status
+                // Update contract_car: end_odometer, return_status
                 contractCarRepository.findById(carDTO.getId()).ifPresent(contractCar -> {
                     contractCar.setEndOdometer(carDTO.getEndOdometer());
                     // Lưu returnStatus vào contract_car (nếu có)
                     if (carDTO.getStatus() != null) {
                         contractCar.setReturnStatus(carDTO.getStatus().name());
                     }
+                    
                     contractCarRepository.save(contractCar);
                 });
 

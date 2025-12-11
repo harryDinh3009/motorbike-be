@@ -93,7 +93,9 @@ public class SurchargeTypeMngServiceImpl implements SurchargeTypeMngService {
 
     @Override
     public List<SurchargeTypeDTO> getAllActiveSurchargeTypes() {
-        List<SurchargeTypeEntity> surchargeTypeEntities = surchargeTypeRepository.findByStatus(1);
+        // Lấy tất cả các loại phụ thu (status = 1 hoặc status = 0 hoặc NULL)
+        // Để hiển thị đầy đủ trong dropdown
+        List<SurchargeTypeEntity> surchargeTypeEntities = surchargeTypeRepository.findAll();
         return surchargeTypeEntities.stream()
                 .map(entity -> modelMapper.map(entity, SurchargeTypeDTO.class))
                 .collect(Collectors.toList());
