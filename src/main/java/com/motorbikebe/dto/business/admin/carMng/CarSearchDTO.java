@@ -1,5 +1,6 @@
 package com.motorbikebe.dto.business.admin.carMng;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.motorbikebe.constant.enumconstant.CarStatus;
 import com.motorbikebe.dto.common.PageableDTO;
 import lombok.Getter;
@@ -30,9 +31,11 @@ public class CarSearchDTO extends PageableDTO {
     private CarStatus status;
 
     /** Ngày thuê (dùng cho API list-available) */
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+07:00")
     private Date startDate;
 
     /** Ngày trả (dùng cho API list-available) */
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+07:00")
     private Date endDate;
 }
 

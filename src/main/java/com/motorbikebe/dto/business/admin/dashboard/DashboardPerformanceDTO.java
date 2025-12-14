@@ -14,8 +14,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class DashboardPerformanceDTO {
-    private long totalContracts; // Tổng số hợp đồng trong kỳ lọc
-    private long totalCars;      // Tổng số xe đang cho thuê (lọc theo chi nhánh)
-    private BigDecimal totalRevenue; // Tổng doanh thu tháng hiện tại
+    private long completedContracts; // Số hợp đồng hoàn thành (theo completed_date)
+    private BigDecimal totalRevenue; // Doanh thu (theo completed_date, = rental + surcharge - discount)
+    private long totalCars; // Số xe cho thuê (theo start_date, status <> CANCELLED)
+    private long newCustomers; // Số khách hàng mới (theo created_date)
 }
 

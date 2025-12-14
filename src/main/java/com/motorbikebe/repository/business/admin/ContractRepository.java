@@ -9,6 +9,7 @@ import com.motorbikebe.entity.domain.ContractEntity;
 import com.motorbikebe.repository.projection.ContractRevenueProjection;
 import com.motorbikebe.repository.projection.DailyRevenueProjection;
 import com.motorbikebe.repository.projection.TopCarRentalProjection;
+import com.motorbikebe.repository.projection.TotalRevenueProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -280,7 +281,7 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                                                    @Param("endDate") Date endDate);
 
     /**
-     * Lấy top 5 xe được thuê nhiều nhất (dựa theo ngày hoàn thành, status = COMPLETED)
+     * Lấy top 10 xe được thuê nhiều nhất (dựa theo ngày hoàn thành, status = COMPLETED)
      * Logic giống với thống kê lượt thuê theo mẫu xe
      */
     @Query(value = """
@@ -298,7 +299,7 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
               AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
             GROUP BY c.model
             ORDER BY rentalCount DESC, revenue DESC
-            LIMIT 5
+            LIMIT 10
             """, nativeQuery = true)
     List<TopCarRentalProjection> findTop5RentedCars(@Param("branchId") String branchId,
                                                      @Param("startDate") Date startDate,
@@ -544,6 +545,42 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
               )
             """, nativeQuery = true)
     Page<ContractDTO> searchPickupContracts(Pageable pageable, @Param("req") DeliveryPickupSearchDTO req);
+
+    /**
+     * Đếm số hợp đồng hoàn thành theo ngày hoàn thành (status = COMPLETED)
+     */
+    @Query(value = """
+            SELECT COUNT(con.id)
+            FROM contract con
+            WHERE con.status = 'COMPLETED'
+              AND con.completed_date IS NOT NULL
+              AND DATE(con.completed_date) >= DATE(:startDate)
+              AND DATE(con.completed_date) < DATE(:endDate)
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
+            """, nativeQuery = true)
+    long countCompletedContractsByCompletedDate(@Param("branchId") String branchId,
+                                                @Param("startDate") Date startDate,
+                                                @Param("endDate") Date endDate);
+
+    /**
+     * Tính tổng doanh thu theo ngày hoàn thành (status = COMPLETED)
+     * Doanh thu = total_rental_amount + total_surcharge - discount_amount
+     */
+    @Query(value = """
+            SELECT 
+                COALESCE(SUM(con.total_rental_amount), 0) AS rentalAmount,
+                COALESCE(SUM(con.total_surcharge), 0) AS surchargeAmount,
+                COALESCE(SUM(con.discount_amount), 0) AS discountAmount
+            FROM contract con
+            WHERE con.status = 'COMPLETED'
+              AND con.completed_date IS NOT NULL
+              AND DATE(con.completed_date) >= DATE(:startDate)
+              AND DATE(con.completed_date) < DATE(:endDate)
+              AND (:branchId IS NULL OR :branchId = '' OR con.pickup_branch_id = :branchId)
+            """, nativeQuery = true)
+    TotalRevenueProjection sumTotalRevenueByCompletedDate(@Param("branchId") String branchId,
+                                                          @Param("startDate") Date startDate,
+                                                          @Param("endDate") Date endDate);
 
 }
 

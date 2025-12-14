@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -56,5 +57,17 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, String
     CustomerEntity findByEmail(String email);
 
     List<CustomerEntity> findByCountry(String country);
+
+    /**
+     * Đếm số khách hàng mới trong tháng (theo created_date)
+     */
+    @Query(value = """
+            SELECT COUNT(c.id)
+            FROM customer c
+            WHERE FROM_UNIXTIME(c.created_date / 1000) >= :startDate
+              AND FROM_UNIXTIME(c.created_date / 1000) < :endDate
+            """, nativeQuery = true)
+    long countNewCustomersByDate(@Param("startDate") Date startDate,
+                                  @Param("endDate") Date endDate);
 }
 
