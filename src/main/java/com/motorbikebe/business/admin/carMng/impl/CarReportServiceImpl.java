@@ -38,6 +38,9 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -285,9 +288,11 @@ public class CarReportServiceImpl implements CarReportService {
                     .setTextAlignment(TextAlignment.CENTER)
                     .setMarginBottom(5));
 
-            // Date range - FE đã gửi đúng timezone GMT+7
+            // Date range - Format Date object với timezone UTC để giữ nguyên giá trị từ frontend
+            // Tránh bị +7 giờ khi format Date object với timezone GMT+7
+            // Frontend đã gửi đúng timezone GMT+7, nên format với UTC để không bị cộng thêm 7 giờ
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
+            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
             String dateRange = String.format("Từ ngày %s tới ngày %s",
                     dateFormat.format(request.getStartDate()),
                     dateFormat.format(request.getEndDate()));

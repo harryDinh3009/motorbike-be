@@ -1056,6 +1056,34 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setFontSize(11)
                     .setMarginBottom(3));
 
+            // Thêm dòng Chi nhánh cho thuê xe
+            if (contract.getPickupBranchName() != null && !contract.getPickupBranchName().isEmpty()) {
+                document.add(new Paragraph("Chi nhánh cho thuê xe: " + contract.getPickupBranchName())
+                        .setFont(font)
+                        .setFontSize(11)
+                        .setMarginBottom(3));
+            }
+
+            // Thêm dòng Xe thuê với danh sách xe
+            if (contract.getCars() != null && !contract.getCars().isEmpty()) {
+                StringBuilder carsList = new StringBuilder("Xe thuê: ");
+                for (int i = 0; i < contract.getCars().size(); i++) {
+                    ContractCarDTO car = contract.getCars().get(i);
+                    String carModel = car.getCarModel() != null ? car.getCarModel() : "[Chưa có tên mẫu xe]";
+                    String licensePlate = car.getLicensePlate() != null ? car.getLicensePlate() : "[Chưa có biển số]";
+                    
+                    carsList.append(carModel).append(" (").append(licensePlate).append(")");
+                    
+                    if (i < contract.getCars().size() - 1) {
+                        carsList.append("; ");
+                    }
+                }
+                document.add(new Paragraph(carsList.toString())
+                        .setFont(font)
+                        .setFontSize(11)
+                        .setMarginBottom(3));
+            }
+
             // Format thời gian thuê và trả xe (đã đúng timezone GMT+7 sau khi sửa ContractSaveDTO)
             String startDateStr = formatDateValue(contract.getStartDate(), "dd/MM/yyyy HH:mm", "[Ngày thuê]", "GMT+7");
             String endDateStr = formatDateValue(contract.getEndDate(), "dd/MM/yyyy HH:mm", "[Ngày trả]", "GMT+7");

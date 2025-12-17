@@ -90,19 +90,27 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
             SimpleDateFormat dateTimeFormat = new SimpleDateFormat("HH:mm dd/MM/yyyy");
             dateTimeFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
 
-            // Trừ 7 giờ cho thời gian thuê và trả xe
-            java.util.Date adjustedStartDate = contract.getStartDate() != null ? 
-                new java.util.Date(contract.getStartDate().getTime() - 7 * 60 * 60 * 1000) : null;
-            java.util.Date adjustedEndDate = contract.getEndDate() != null ? 
-                new java.util.Date(contract.getEndDate().getTime() - 7 * 60 * 60 * 1000) : null;
+            // Sử dụng thời gian giao xe và nhận xe thực tế
+            // deliveryTime và returnTime đã có timezone GMT+7 trong annotation @JsonFormat
+            // Không cần trừ 7 giờ vì timezone đã được set đúng
+            java.util.Date deliveryDate = contract.getDeliveryTime();
+            java.util.Date returnDate = contract.getReturnTime();
+
+            // Nếu chưa có thời gian thực tế, fallback về thời gian dự kiến
+            if (deliveryDate == null) {
+                deliveryDate = contract.getStartDate();
+            }
+            if (returnDate == null) {
+                returnDate = contract.getEndDate();
+            }
 
             Table infoTable = new Table(UnitValue.createPercentArray(new float[]{1, 1})).useAllAvailableWidth();
             infoTable.addCell(makeBorderlessCell("Họ tên người thuê: " + defaultString(contract.getCustomerName()), font));
             infoTable.addCell(makeBorderlessCell("Mã hợp đồng: " + defaultString(contract.getContractCode()), font));
             infoTable.addCell(makeBorderlessCell("SĐT: " + defaultString(contract.getPhoneNumber()), font));
-            infoTable.addCell(makeBorderlessCell("Thuê lúc: " + formatDate(adjustedStartDate, dateTimeFormat), font));
+            infoTable.addCell(makeBorderlessCell("Ngày giao xe: " + formatDate(deliveryDate, dateTimeFormat), font));
             infoTable.addCell(makeBorderlessCell("CMND/CCCD: " + defaultString(contract.getCitizenId()), font));
-            infoTable.addCell(makeBorderlessCell("Trả lúc: " + formatDate(adjustedEndDate, dateTimeFormat), font));
+            infoTable.addCell(makeBorderlessCell("Ngày nhận xe: " + formatDate(returnDate, dateTimeFormat), font));
             document.add(infoTable);
 
             document.add(new Paragraph("\nXE THUÊ").setFont(fontBold).setFontSize(12));
