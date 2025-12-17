@@ -26,6 +26,9 @@ public class CarSaveDTO {
     /** ID chi nhánh */
     private String branchId;
 
+    /** ID hãng xe */
+    private String brandId;
+
     /** Giá thuê theo ngày */
     private BigDecimal dailyPrice;
 

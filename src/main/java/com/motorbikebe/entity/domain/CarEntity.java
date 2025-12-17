@@ -44,6 +44,10 @@ public class CarEntity extends PrimaryEntity {
     @Column(name = "branch_id", length = EntityProperties.LENGTH_ID)
     private String branchId;
 
+    /** ID hãng xe */
+    @Column(name = "brand_id", length = EntityProperties.LENGTH_ID)
+    private String brandId;
+
     /** Giá thuê theo ngày */
     @Column(name = "daily_price", precision = 15, scale = 2)
     private BigDecimal dailyPrice;

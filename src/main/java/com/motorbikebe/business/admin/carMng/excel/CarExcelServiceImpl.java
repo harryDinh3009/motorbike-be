@@ -7,8 +7,10 @@ import com.motorbikebe.constant.classconstant.CarConstants;
 import com.motorbikebe.constant.enumconstant.CarStatus;
 import com.motorbikebe.dto.business.admin.carMng.CarSaveDTO;
 import com.motorbikebe.entity.domain.BranchEntity;
+import com.motorbikebe.entity.domain.BrandEntity;
 import com.motorbikebe.entity.domain.CarEntity;
 import com.motorbikebe.repository.business.admin.BranchRepository;
+import com.motorbikebe.repository.business.admin.BrandRepository;
 import com.motorbikebe.repository.business.admin.CarRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,12 +40,13 @@ public class CarExcelServiceImpl implements CarExcelService {
 
     private final CarRepository carRepository;
     private final BranchRepository branchRepository;
+    private final BrandRepository brandRepository;
     private final CarModelService carModelService;
 
     // Column headers
     private static final String[] HEADERS = {
-            "Mẫu xe (*)", "Biển số xe (*)", "Loại xe (*)", "Chi nhánh",
-            "Giá ngày (VNĐ)", "Giá giờ (VNĐ)", "Tình trạng xe", "Odometer (km)",
+            "Mẫu xe (*)", "Biển số xe (*)", "Loại xe (*)", "Chi nhánh", "Hãng xe",
+            "Giá ngày (VNĐ)", "Giá giờ (VNĐ)", "Odometer (km)",
             "Trạng thái (*)", "Ghi chú", "Năm SX", "Xuất xứ",
             "Giá trị xe (VNĐ)", "Số khung", "Số máy", "Màu sắc",
             "Số đăng ký", "Tên trên đăng ký", "Nơi đăng ký",
@@ -74,10 +77,10 @@ public class CarExcelServiceImpl implements CarExcelService {
 
             // Create sample data rows
             String[][] sampleData = {
-                    {"Honda XR150L", "33D1-99765", "Xe cao cấp", "Chi nhánh trung tâm", "300000", "40000", "Nguyên vẹn", "12000", "Hoạt động", "Xe hoạt động tốt", "2010", "Hà Nội"},
-                    {"Honda Winner 150", "33L1-34568", "Xe tay côn", "Chi nhánh trung tâm", "350000", "50000", "Nguyên vẹn", "13000", "Hoạt động", "", "2011", "Hà Nội"},
-                    {"Honda Vision", "33G1-55666", "Xe ga", "Chi nhánh trung tâm", "400000", "40000", "Nguyên vẹn", "12000", "Hoạt động", "", "2010", "Hà Nội"},
-                    {"Honda Wave Alpha", "33N1-22222", "Xe số", "Chi nhánh trung tâm", "400000", "50000", "Nguyên vẹn", "13000", "Hoạt động", "", "2011", "Hà Nội"}
+                    {"Honda XR150L", "33D1-99765", "Xe cao cấp", "Chi nhánh trung tâm", "Honda", "300000", "40000", "12000", "Hoạt động", "Xe hoạt động tốt", "2010", "Hà Nội"},
+                    {"Honda Winner 150", "33L1-34568", "Xe tay côn", "Chi nhánh trung tâm", "Honda", "350000", "50000", "13000", "Hoạt động", "", "2011", "Hà Nội"},
+                    {"Honda Vision", "33G1-55666", "Xe ga", "Chi nhánh trung tâm", "Honda", "400000", "40000", "12000", "Hoạt động", "", "2010", "Hà Nội"},
+                    {"Honda Wave Alpha", "33N1-22222", "Xe số", "Chi nhánh trung tâm", "Honda", "400000", "50000", "13000", "Hoạt động", "", "2011", "Hà Nội"}
             };
 
             // Populate sample data rows
@@ -89,8 +92,8 @@ public class CarExcelServiceImpl implements CarExcelService {
                     cell.setCellStyle(dataStyle);
                     
                     if (j < rowData.length && !rowData[j].isEmpty()) {
-                        // Columns with numbers: Giá ngày (4), Giá giờ (5), Odometer (7), Năm SX (10)
-                        if (j == 4 || j == 5 || j == 7 || j == 10) {
+                        // Columns with numbers: Giá ngày (5), Giá giờ (6), Odometer (7), Năm SX (10)
+                        if (j == 5 || j == 6 || j == 7 || j == 10) {
                             try {
                                 cell.setCellValue(Double.parseDouble(rowData[j]));
                             } catch (NumberFormatException e) {
@@ -318,11 +321,15 @@ public class CarExcelServiceImpl implements CarExcelService {
                     "Dropdowns!$C$1:$C$" + branchNames.size());
         }
 
-        // Column D: Tình trạng xe (CAR_CONDITIONS)
-        List<String> conditions = CarConstants.CAR_CONDITIONS;
-        createDropdownList(hiddenSheet, 3, conditions);
-        addDropdownWithFormula(sheet, validationHelper, 1, 10, 6, 6,
-                "Dropdowns!$D$1:$D$" + conditions.size());
+        // Column D: Hãng xe (lấy từ DB)
+        List<String> brandNames = brandRepository.findAllByOrderByNameAsc().stream()
+                .map(BrandEntity::getName)
+                .collect(Collectors.toList());
+        if (!brandNames.isEmpty()) {
+            createDropdownList(hiddenSheet, 6, brandNames);
+            addDropdownWithFormula(sheet, validationHelper, 1, 10, 4, 4,
+                    "Dropdowns!$G$1:$G$" + brandNames.size());
+        }
 
         // Column E: Trạng thái (CAR_STATUSES) - Đầy đủ 5 trạng thái
         List<String> statuses = Arrays.asList(
@@ -402,9 +409,18 @@ public class CarExcelServiceImpl implements CarExcelService {
                     .orElse(null));
         }
 
-        dto.setDailyPrice(getCellValueAsBigDecimal(row.getCell(4)));
-        dto.setHourlyPrice(getCellValueAsBigDecimal(row.getCell(5)));
-        dto.setCondition(getCellValueAsString(row.getCell(6)));
+        // Brand - tìm ID từ tên
+        String brandName = getCellValueAsString(row.getCell(4));
+        if (StringUtils.isNotBlank(brandName)) {
+            dto.setBrandId(brandRepository.findAllByOrderByNameAsc().stream()
+                    .filter(b -> b.getName().equals(brandName))
+                    .findFirst()
+                    .map(b -> b.getId())
+                    .orElse(null));
+        }
+
+        dto.setDailyPrice(getCellValueAsBigDecimal(row.getCell(5)));
+        dto.setHourlyPrice(getCellValueAsBigDecimal(row.getCell(6)));
         dto.setCurrentOdometer(getCellValueAsInteger(row.getCell(7)));
 
         // Status - convert description to enum
@@ -458,12 +474,6 @@ public class CarExcelServiceImpl implements CarExcelService {
             errors.add("Trạng thái không được để trống");
         }
 
-        // Validate condition if provided
-        if (StringUtils.isNotBlank(dto.getCondition()) &&
-                !CarConstants.CAR_CONDITIONS.contains(dto.getCondition())) {
-            errors.add("Tình trạng xe không hợp lệ");
-        }
-
         // Validate color if provided
         if (StringUtils.isNotBlank(dto.getColor()) &&
                 !CarConstants.CAR_COLORS.contains(dto.getColor())) {
@@ -491,9 +501,17 @@ public class CarExcelServiceImpl implements CarExcelService {
         }
         createCell(row, colNum++, branchName, dataStyle);
 
+        // Brand name
+        String brandName = "";
+        if (StringUtils.isNotBlank(car.getBrandId())) {
+            brandName = brandRepository.findById(car.getBrandId())
+                    .map(b -> b.getName())
+                    .orElse("");
+        }
+        createCell(row, colNum++, brandName, dataStyle);
+
         createCellNumber(row, colNum++, car.getDailyPrice(), numberStyle);
         createCellNumber(row, colNum++, car.getHourlyPrice(), numberStyle);
-        createCell(row, colNum++, car.getCondition(), dataStyle);
         createCellNumber(row, colNum++, car.getCurrentOdometer(), numberStyle);
         createCell(row, colNum++, car.getStatus() != null ? car.getStatus().getDescription() : "", dataStyle);
         createCell(row, colNum++, car.getNote(), dataStyle);
@@ -613,6 +631,7 @@ public class CarExcelServiceImpl implements CarExcelService {
         entity.setLicensePlate(dto.getLicensePlate());
         entity.setCarType(dto.getCarType());
         entity.setBranchId(dto.getBranchId());
+        entity.setBrandId(StringUtils.isNotBlank(dto.getBrandId()) ? dto.getBrandId() : null);
         entity.setDailyPrice(dto.getDailyPrice());
         entity.setHourlyPrice(dto.getHourlyPrice());
         entity.setCondition(dto.getCondition());

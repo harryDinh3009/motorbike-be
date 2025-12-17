@@ -74,6 +74,12 @@ public class ContractMngServiceImpl implements ContractMngService {
         Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
         Page<ContractDTO> contractPage = contractRepository.searchContracts(pageable, searchDTO);
 
+        // Tính tổng tiền của TẤT CẢ hợp đồng theo filter (không chỉ trang hiện tại)
+        BigDecimal totalAmount = contractRepository.sumFinalAmountByFilter(searchDTO);
+        if (totalAmount == null) {
+            totalAmount = BigDecimal.ZERO;
+        }
+
         // Set status description and load cars for each contract
         contractPage.forEach(contract -> {
             if (contract.getStatus() != null) {
@@ -90,6 +96,46 @@ public class ContractMngServiceImpl implements ContractMngService {
                 .totalRecords(contractPage.getTotalElements())
                 .currentPage(searchDTO.getPage())
                 .totalPages(contractPage.getTotalPages())
+                .totalAmount(totalAmount)
+                .build();
+    }
+
+    @Override
+    public PageableObject<ContractDTO> searchContractsLight(ContractSearchDTO searchDTO) {
+        // Set end dates to end of day (23:59:59) to include all contracts on that day
+        if (searchDTO.getStartDateTo() != null) {
+            searchDTO.setStartDateTo(setEndOfDay(searchDTO.getStartDateTo()));
+        }
+        if (searchDTO.getEndDateTo() != null) {
+            searchDTO.setEndDateTo(setEndOfDay(searchDTO.getEndDateTo()));
+        }
+        if (searchDTO.getCreatedDateTo() != null) {
+            searchDTO.setCreatedDateTo(setEndOfDay(searchDTO.getCreatedDateTo()));
+        }
+        
+        Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
+        Page<ContractDTO> contractPage = contractRepository.searchContracts(pageable, searchDTO);
+
+        // Tính tổng tiền của TẤT CẢ hợp đồng theo filter (không chỉ trang hiện tại)
+        BigDecimal totalAmount = contractRepository.sumFinalAmountByFilter(searchDTO);
+        if (totalAmount == null) {
+            totalAmount = BigDecimal.ZERO;
+        }
+
+        // CHỈ set status description, KHÔNG load cars để tối ưu performance
+        contractPage.forEach(contract -> {
+            if (contract.getStatus() != null) {
+                contract.setStatusNm(contract.getStatus().getDescription());
+            }
+            // KHÔNG load cars - tối ưu performance
+        });
+
+        return PageableObject.<ContractDTO>builder()
+                .data(contractPage.getContent())
+                .totalRecords(contractPage.getTotalElements())
+                .currentPage(searchDTO.getPage())
+                .totalPages(contractPage.getTotalPages())
+                .totalAmount(totalAmount)
                 .build();
     }
 

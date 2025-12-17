@@ -51,6 +51,15 @@ public class ContractMngController {
     }
 
     /**
+     * Tìm kiếm hợp đồng với phân trang (light version - không load cars để tối ưu performance)
+     */
+    @PostMapping("/list-light")
+    public ApiResponse<PageableObject<ContractDTO>> searchContractsLight(@RequestBody ContractSearchDTO searchDTO) {
+        PageableObject<ContractDTO> pageableRes = contractMngService.searchContractsLight(searchDTO);
+        return new ApiResponse<>(ApiStatus.SUCCESS, pageableRes);
+    }
+
+    /**
      * Lấy chi tiết hợp đồng
      */
     @GetMapping("/detail/{id}")

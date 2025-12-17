@@ -96,7 +96,7 @@ public class ContractExcelServiceImpl implements ContractExcelService {
                 // Ngày thuê
                 if (contract.getStartDate() != null) {
                     Cell cell = row.createCell(colNum++);
-                    cell.setCellValue(DATE_ONLY_FORMAT.format(contract.getStartDate()));
+                    cell.setCellValue(DATE_FORMAT.format(contract.getStartDate()));
                     cell.setCellStyle(dateStyle);
                 } else {
                     createCell(row, colNum++, "", dateStyle);
@@ -105,7 +105,7 @@ public class ContractExcelServiceImpl implements ContractExcelService {
                 // Ngày trả
                 if (contract.getEndDate() != null) {
                     Cell cell = row.createCell(colNum++);
-                    cell.setCellValue(DATE_ONLY_FORMAT.format(contract.getEndDate()));
+                    cell.setCellValue(DATE_FORMAT.format(contract.getEndDate()));
                     cell.setCellStyle(dateStyle);
                 } else {
                     createCell(row, colNum++, "", dateStyle);

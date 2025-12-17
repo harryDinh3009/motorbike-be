@@ -13,6 +13,7 @@ import com.motorbikebe.dto.business.admin.carMng.CarSearchDTO;
 import com.motorbikebe.dto.business.admin.carMng.ConflictingContractDTO;
 import com.motorbikebe.dto.common.userCurrent.UserCurrentInfoDTO;
 import com.motorbikebe.entity.domain.CarEntity;
+import com.motorbikebe.repository.business.admin.BrandRepository;
 import com.motorbikebe.repository.business.admin.CarRepository;
 import com.motorbikebe.repository.business.admin.ContractCarRepository;
 import com.motorbikebe.util.CloudinaryUtils;
@@ -39,6 +40,7 @@ public class CarMngServiceImpl implements CarMngService {
 
     private final CarRepository carRepository;
     private final ContractCarRepository contractCarRepository;
+    private final BrandRepository brandRepository;
     private final CloudinaryUploadImages cloudinaryUploadImages;
     private final ModelMapper modelMapper;
     private final CommonService commonService;
@@ -70,6 +72,14 @@ public class CarMngServiceImpl implements CarMngService {
             carDTO.setStatusNm(carDTO.getStatus().getDescription());
         }
 
+        // Set brand name if brandId exists
+        if (StringUtils.isNotBlank(carEntity.get().getBrandId())) {
+            Optional<com.motorbikebe.entity.domain.BrandEntity> brandEntity = brandRepository.findById(carEntity.get().getBrandId());
+            if (brandEntity.isPresent()) {
+                carDTO.setBrandName(brandEntity.get().getName());
+            }
+        }
+
         return carDTO;
     }
 
@@ -93,6 +103,7 @@ public class CarMngServiceImpl implements CarMngService {
         carEntity.setLicensePlate(saveDTO.getLicensePlate());
         carEntity.setCarType(saveDTO.getCarType());
         carEntity.setBranchId(saveDTO.getBranchId());
+        carEntity.setBrandId(StringUtils.isNotBlank(saveDTO.getBrandId()) ? saveDTO.getBrandId() : null);
         carEntity.setDailyPrice(saveDTO.getDailyPrice());
         carEntity.setHourlyPrice(saveDTO.getHourlyPrice());
         carEntity.setCondition(saveDTO.getCondition());

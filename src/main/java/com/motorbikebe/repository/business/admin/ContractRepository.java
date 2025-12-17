@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -69,12 +70,15 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                        WHERE cc.contract_id = con.id
                        AND c.license_plate LIKE %:#{#req.keyword}%
                    ))
+            AND (:#{#req.customerId} IS NULL OR :#{#req.customerId} = '' OR con.customer_id = :#{#req.customerId})
             AND (:#{#req.status?.name()} IS NULL OR con.status = :#{#req.status?.name()})
             AND (:#{#req.source} IS NULL OR :#{#req.source} = '' OR con.source = :#{#req.source})
             AND (:#{#req.startDateFrom} IS NULL OR con.start_date >= :#{#req.startDateFrom})
             AND (:#{#req.startDateTo} IS NULL OR con.start_date <= :#{#req.startDateTo})
             AND (:#{#req.endDateFrom} IS NULL OR con.end_date >= :#{#req.endDateFrom})
             AND (:#{#req.endDateTo} IS NULL OR con.end_date <= :#{#req.endDateTo})
+            AND (:#{#req.createdDateFrom} IS NULL OR DATE(con.created_date) >= DATE(:#{#req.createdDateFrom}))
+            AND (:#{#req.createdDateTo} IS NULL OR DATE(con.created_date) <= DATE(:#{#req.createdDateTo}))
             AND (:#{#req.pickupBranchId} IS NULL OR :#{#req.pickupBranchId} = '' OR con.pickup_branch_id = :#{#req.pickupBranchId})
             AND (:#{#req.returnBranchId} IS NULL OR :#{#req.returnBranchId} = '' OR con.return_branch_id = :#{#req.returnBranchId})
             ORDER BY con.created_date DESC
@@ -92,16 +96,50 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
                        WHERE cc.contract_id = con.id
                        AND c.license_plate LIKE %:#{#req.keyword}%
                    ))
+            AND (:#{#req.customerId} IS NULL OR :#{#req.customerId} = '' OR con.customer_id = :#{#req.customerId})
             AND (:#{#req.status?.name()} IS NULL OR con.status = :#{#req.status?.name()})
             AND (:#{#req.source} IS NULL OR :#{#req.source} = '' OR con.source = :#{#req.source})
             AND (:#{#req.startDateFrom} IS NULL OR con.start_date >= :#{#req.startDateFrom})
             AND (:#{#req.startDateTo} IS NULL OR con.start_date <= :#{#req.startDateTo})
             AND (:#{#req.endDateFrom} IS NULL OR con.end_date >= :#{#req.endDateFrom})
             AND (:#{#req.endDateTo} IS NULL OR con.end_date <= :#{#req.endDateTo})
+            AND (:#{#req.createdDateFrom} IS NULL OR DATE(con.created_date) >= DATE(:#{#req.createdDateFrom}))
+            AND (:#{#req.createdDateTo} IS NULL OR DATE(con.created_date) <= DATE(:#{#req.createdDateTo}))
             AND (:#{#req.pickupBranchId} IS NULL OR :#{#req.pickupBranchId} = '' OR con.pickup_branch_id = :#{#req.pickupBranchId})
             AND (:#{#req.returnBranchId} IS NULL OR :#{#req.returnBranchId} = '' OR con.return_branch_id = :#{#req.returnBranchId})
             """, nativeQuery = true)
     Page<ContractDTO> searchContracts(Pageable pageable, @Param("req") ContractSearchDTO req);
+
+    /**
+     * Tính tổng tiền (final_amount) của tất cả hợp đồng theo filter
+     */
+    @Query(value = """
+            SELECT COALESCE(SUM(con.final_amount), 0)
+            FROM contract con
+            INNER JOIN customer cus ON con.customer_id = cus.id
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = ''
+                   OR con.contract_code LIKE %:#{#req.keyword}%
+                   OR cus.full_name LIKE %:#{#req.keyword}%
+                   OR cus.phone_number LIKE %:#{#req.keyword}%
+                   OR EXISTS (
+                       SELECT 1 FROM contract_car cc
+                       INNER JOIN car c ON cc.car_id = c.id
+                       WHERE cc.contract_id = con.id
+                       AND c.license_plate LIKE %:#{#req.keyword}%
+                   ))
+            AND (:#{#req.customerId} IS NULL OR :#{#req.customerId} = '' OR con.customer_id = :#{#req.customerId})
+            AND (:#{#req.status?.name()} IS NULL OR con.status = :#{#req.status?.name()})
+            AND (:#{#req.source} IS NULL OR :#{#req.source} = '' OR con.source = :#{#req.source})
+            AND (:#{#req.startDateFrom} IS NULL OR con.start_date >= :#{#req.startDateFrom})
+            AND (:#{#req.startDateTo} IS NULL OR con.start_date <= :#{#req.startDateTo})
+            AND (:#{#req.endDateFrom} IS NULL OR con.end_date >= :#{#req.endDateFrom})
+            AND (:#{#req.endDateTo} IS NULL OR con.end_date <= :#{#req.endDateTo})
+            AND (:#{#req.createdDateFrom} IS NULL OR DATE(con.created_date) >= DATE(:#{#req.createdDateFrom}))
+            AND (:#{#req.createdDateTo} IS NULL OR DATE(con.created_date) <= DATE(:#{#req.createdDateTo}))
+            AND (:#{#req.pickupBranchId} IS NULL OR :#{#req.pickupBranchId} = '' OR con.pickup_branch_id = :#{#req.pickupBranchId})
+            AND (:#{#req.returnBranchId} IS NULL OR :#{#req.returnBranchId} = '' OR con.return_branch_id = :#{#req.returnBranchId})
+            """, nativeQuery = true)
+    BigDecimal sumFinalAmountByFilter(@Param("req") ContractSearchDTO req);
 
     /**
      * Tìm hợp đồng theo khách hàng

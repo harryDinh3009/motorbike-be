@@ -31,6 +31,12 @@ public class CarDTO {
     /** Tên chi nhánh */
     private String branchName;
 
+    /** ID hãng xe */
+    private String brandId;
+
+    /** Tên hãng xe */
+    private String brandName;
+
     /** Giá thuê theo ngày */
     private BigDecimal dailyPrice;
 
@@ -90,11 +96,12 @@ public class CarDTO {
     private Date insuranceExpiryDate;
 
     /**
-     * Constructor cho Spring Data JPA native query projection (24 parameters)
+     * Constructor cho Spring Data JPA native query projection (26 parameters)
      * Note: status nhận String từ database và convert sang enum
      */
     public CarDTO(String id, String model, String licensePlate, String carType,
-                  String branchId, String branchName, BigDecimal dailyPrice, BigDecimal hourlyPrice,
+                  String branchId, String branchName, String brandId, String brandName,
+                  BigDecimal dailyPrice, BigDecimal hourlyPrice,
                   String condition, Integer currentOdometer, String status, String imageUrl,
                   String note, Integer yearOfManufacture, String origin, BigDecimal value,
                   String frameNumber, String engineNumber, String color, String registrationNumber,
@@ -106,6 +113,8 @@ public class CarDTO {
         this.carType = carType;
         this.branchId = branchId;
         this.branchName = branchName;
+        this.brandId = brandId;
+        this.brandName = brandName;
         this.dailyPrice = dailyPrice;
         this.hourlyPrice = hourlyPrice;
         this.condition = condition;

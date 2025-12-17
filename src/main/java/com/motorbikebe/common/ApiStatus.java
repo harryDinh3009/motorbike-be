@@ -76,12 +76,14 @@ public enum ApiStatus {
     CANNOT_DELETE_CAR_HAS_CONTRACTS(HttpStatus.BAD_REQUEST, "400028", "Không thể xóa vì xe này đã được sử dụng trong hợp đồng thuê xe."),
     CANNOT_DELETE_CAR_MODEL_HAS_CARS(HttpStatus.BAD_REQUEST, "400029", "Không thể xóa vì mẫu xe này đang được gán cho xe trong hệ thống."),
     CANNOT_DELETE_USER_HAS_CONTRACTS(HttpStatus.BAD_REQUEST, "400030", "Không thể xóa vì nhân viên này đã được phân công trong hợp đồng thuê xe."),
+    BRAND_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "400031", "Tên hãng xe đã tồn tại trong hệ thống."),
+    CANNOT_DELETE_BRAND_HAS_CARS(HttpStatus.BAD_REQUEST, "400032", "Không thể xóa vì hãng xe này đang được sử dụng bởi các xe trong hệ thống."),
 
     // Contract validation errors
-    CAR_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "400031", "Xe không khả dụng trong khoảng thời gian đã chọn."),
-    CONTRACT_DATE_CONFLICT(HttpStatus.BAD_REQUEST, "400032", "Thời gian thuê/trả bị trùng với hợp đồng khác."),
-    RETURN_BRANCH_PERMISSION_DENIED(HttpStatus.BAD_REQUEST, "400033", "Bạn không có quyền thực hiện chức năng do không thuộc chi nhánh trả."),
-    CAR_NOT_RETURNED_IN_PREVIOUS_CONTRACT(HttpStatus.BAD_REQUEST, "400034", "Xe chưa được trả trong hợp đồng gần nhất."),
+    CAR_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "400033", "Xe không khả dụng trong khoảng thời gian đã chọn."),
+    CONTRACT_DATE_CONFLICT(HttpStatus.BAD_REQUEST, "400034", "Thời gian thuê/trả bị trùng với hợp đồng khác."),
+    RETURN_BRANCH_PERMISSION_DENIED(HttpStatus.BAD_REQUEST, "400035", "Bạn không có quyền thực hiện chức năng do không thuộc chi nhánh trả."),
+    CAR_NOT_RETURNED_IN_PREVIOUS_CONTRACT(HttpStatus.BAD_REQUEST, "400036", "Xe chưa được trả trong hợp đồng gần nhất."),
 
     // ===== 5xx: Server Errors =====
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500001", "An unexpected server error occurred."),

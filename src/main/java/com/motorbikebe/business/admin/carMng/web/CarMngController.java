@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -344,11 +345,32 @@ public class CarMngController {
      */
     @PostMapping("/export-excel")
     public ResponseEntity<byte[]> exportExcel(@RequestBody CarSearchDTO searchDTO) {
-        // Tìm kiếm xe theo điều kiện
+        // Reset page và set size lớn để lấy tất cả dữ liệu
+        searchDTO.setPage(1);
+        int pageSize = 1000; // Set size để lấy từng batch
+        searchDTO.setSize(pageSize);
+        
+        // Tìm kiếm xe theo điều kiện - lấy trang đầu tiên
         PageableObject<CarDTO> searchResult = carMngService.searchCars(searchDTO);
         
+        // Lấy tất cả các xe
+        List<CarDTO> allCars = new ArrayList<>(searchResult.getData());
+        long totalRecords = searchResult.getTotalRecords();
+        
+        // Tính số trang cần lấy
+        long totalPages = (totalRecords + pageSize - 1) / pageSize; // Làm tròn lên
+        
+        // Lấy các trang còn lại nếu có
+        if (totalPages > 1) {
+            for (int page = 2; page <= totalPages; page++) {
+                searchDTO.setPage(page);
+                PageableObject<CarDTO> pageResult = carMngService.searchCars(searchDTO);
+                allCars.addAll(pageResult.getData());
+            }
+        }
+        
         // Convert CarDTO sang CarSaveDTO để export
-        List<CarSaveDTO> cars = searchResult.getData().stream()
+        List<CarSaveDTO> cars = allCars.stream()
                 .map(carDTO -> {
                     CarSaveDTO saveDTO = new CarSaveDTO();
                     saveDTO.setId(carDTO.getId());
@@ -356,6 +378,7 @@ public class CarMngController {
                     saveDTO.setLicensePlate(carDTO.getLicensePlate());
                     saveDTO.setCarType(carDTO.getCarType());
                     saveDTO.setBranchId(carDTO.getBranchId());
+                    saveDTO.setBrandId(carDTO.getBrandId());
                     saveDTO.setDailyPrice(carDTO.getDailyPrice());
                     saveDTO.setHourlyPrice(carDTO.getHourlyPrice());
                     saveDTO.setCondition(carDTO.getCondition());

@@ -26,6 +26,8 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.car_type AS carType,
                    c.branch_id AS branchId,
                    b.name AS branchName,
+                   c.brand_id AS brandId,
+                   br.name AS brandName,
                    c.daily_price AS dailyPrice,
                    c.hourly_price AS hourlyPrice,
                    c.condition,
@@ -46,6 +48,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.insurance_expiry_date AS insuranceExpiryDate
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
+            LEFT JOIN brand br ON c.brand_id = br.id
             WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
                    OR c.model LIKE %:#{#req.keyword}% 
                    OR c.license_plate LIKE %:#{#req.keyword}%)
@@ -59,6 +62,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             SELECT COUNT(c.id)
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
+            LEFT JOIN brand br ON c.brand_id = br.id
             WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
                    OR c.model LIKE %:#{#req.keyword}% 
                    OR c.license_plate LIKE %:#{#req.keyword}%)
@@ -86,6 +90,16 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             """, nativeQuery = true)
     Long existsByModel(@Param("modelName") String modelName);
 
+    /**
+     * Kiểm tra có xe nào dùng brand này không
+     */
+    @Query(value = """
+            SELECT COUNT(c.id)
+            FROM car c
+            WHERE c.brand_id = :brandId
+            """, nativeQuery = true)
+    Long existsByBrandId(@Param("brandId") String brandId);
+
     @Query(value = """
             SELECT COUNT(c.id)
             FROM car c
@@ -101,6 +115,8 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.car_type AS carType,
                    c.branch_id AS branchId,
                    b.name AS branchName,
+                   c.brand_id AS brandId,
+                   br.name AS brandName,
                    c.daily_price AS dailyPrice,
                    c.hourly_price AS hourlyPrice,
                    c.condition,
@@ -139,6 +155,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.insurance_expiry_date AS insuranceExpiryDate
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
+            LEFT JOIN brand br ON c.brand_id = br.id
             WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
                    OR c.model LIKE %:#{#req.keyword}% 
                    OR c.license_plate LIKE %:#{#req.keyword}%)
@@ -152,6 +169,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             SELECT COUNT(c.id)
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
+            LEFT JOIN brand br ON c.brand_id = br.id
             WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
                    OR c.model LIKE %:#{#req.keyword}% 
                    OR c.license_plate LIKE %:#{#req.keyword}%)
@@ -227,6 +245,8 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.car_type AS carType,
                    c.branch_id AS branchId,
                    b.name AS branchName,
+                   c.brand_id AS brandId,
+                   br.name AS brandName,
                    c.daily_price AS dailyPrice,
                    c.hourly_price AS hourlyPrice,
                    c.condition,
@@ -247,6 +267,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.insurance_expiry_date AS insuranceExpiryDate
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
+            LEFT JOIN brand br ON c.brand_id = br.id
             WHERE (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
               AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
               AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
@@ -277,6 +298,8 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.car_type AS carType,
                    c.branch_id AS branchId,
                    b.name AS branchName,
+                   c.brand_id AS brandId,
+                   br.name AS brandName,
                    c.daily_price AS dailyPrice,
                    c.hourly_price AS hourlyPrice,
                    c.condition,
@@ -297,6 +320,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.insurance_expiry_date AS insuranceExpiryDate
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
+            LEFT JOIN brand br ON c.brand_id = br.id
             WHERE (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
               AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
               AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})

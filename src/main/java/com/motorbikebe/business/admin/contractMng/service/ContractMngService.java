@@ -19,6 +19,11 @@ public interface ContractMngService {
     PageableObject<ContractDTO> searchContracts(ContractSearchDTO searchDTO);
 
     /**
+     * Tìm kiếm hợp đồng với phân trang (light version - không load cars để tối ưu performance)
+     */
+    PageableObject<ContractDTO> searchContractsLight(ContractSearchDTO searchDTO);
+
+    /**
      * Lấy chi tiết hợp đồng
      */
     ContractDTO getContractDetail(String id);
