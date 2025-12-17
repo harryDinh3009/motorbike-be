@@ -1056,14 +1056,9 @@ public class ContractMngServiceImpl implements ContractMngService {
                     .setFontSize(11)
                     .setMarginBottom(3));
 
-            // Trừ 7 giờ cho thời gian thuê và trả xe
-            Date adjustedStartDate = contract.getStartDate() != null ? 
-                new Date(contract.getStartDate().getTime() - 7 * 60 * 60 * 1000) : null;
-            Date adjustedEndDate = contract.getEndDate() != null ? 
-                new Date(contract.getEndDate().getTime() - 7 * 60 * 60 * 1000) : null;
-            
-            String startDateStr = formatDateValue(adjustedStartDate, "dd/MM/yyyy HH:mm", "[Ngày thuê]", "GMT+7");
-            String endDateStr = formatDateValue(adjustedEndDate, "dd/MM/yyyy HH:mm", "[Ngày trả]", "GMT+7");
+            // Format thời gian thuê và trả xe (đã đúng timezone GMT+7 sau khi sửa ContractSaveDTO)
+            String startDateStr = formatDateValue(contract.getStartDate(), "dd/MM/yyyy HH:mm", "[Ngày thuê]", "GMT+7");
+            String endDateStr = formatDateValue(contract.getEndDate(), "dd/MM/yyyy HH:mm", "[Ngày trả]", "GMT+7");
 
             document.add(new Paragraph("Thời gian thuê: " + startDateStr + " đến " + endDateStr)
                     .setFont(font)
@@ -1484,17 +1479,19 @@ public class ContractMngServiceImpl implements ContractMngService {
             return result;
         }
         
-        // Parse String thành Date
+        // Parse String thành Date với timezone GMT+7
         Date startDate;
         Date endDate;
         try {
-            // Thử parse với format ISO: yyyy-MM-dd'T'HH:mm:ss hoặc yyyy-MM-dd'T'HH:mm
+            // Set timezone GMT+7 để parse đúng với timezone của frontend
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
             try {
                 startDate = dateFormat.parse(requestDTO.getStartDate());
             } catch (Exception e) {
                 // Thử format khác: yyyy-MM-dd'T'HH:mm
                 SimpleDateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+                dateFormat2.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
                 startDate = dateFormat2.parse(requestDTO.getStartDate());
             }
             
@@ -1503,6 +1500,7 @@ public class ContractMngServiceImpl implements ContractMngService {
             } catch (Exception e) {
                 // Thử format khác: yyyy-MM-dd'T'HH:mm
                 SimpleDateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+                dateFormat2.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
                 endDate = dateFormat2.parse(requestDTO.getEndDate());
             }
         } catch (Exception e) {

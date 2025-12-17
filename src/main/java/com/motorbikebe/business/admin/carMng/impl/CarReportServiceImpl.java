@@ -1,5 +1,6 @@
 package com.motorbikebe.business.admin.carMng.impl;
 
+import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
@@ -247,10 +248,8 @@ public class CarReportServiceImpl implements CarReportService {
         Pageable pageable = PageRequest.of(0, 10000);
         Page<CarDTO> carPage = carRepository.searchAvailableCars(pageable, searchDTO);
         
-        // Filter only AVAILABLE cars (not struck through in contract modal)
-        List<CarDTO> rentableCars = carPage.getContent().stream()
-                .filter(car -> car.getStatus() == CarStatus.AVAILABLE)
-                .collect(Collectors.toList());
+        // Hiển thị cả AVAILABLE và NOT_AVAILABLE (giống modal)
+        List<CarDTO> rentableCars = carPage.getContent();
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(baos);
@@ -286,9 +285,9 @@ public class CarReportServiceImpl implements CarReportService {
                     .setTextAlignment(TextAlignment.CENTER)
                     .setMarginBottom(5));
 
-            // Date range - use UTC timezone for display (FE sends local time string, parsed as UTC by Spring)
+            // Date range - FE đã gửi đúng timezone GMT+7
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            dateFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
             String dateRange = String.format("Từ ngày %s tới ngày %s",
                     dateFormat.format(request.getStartDate()),
                     dateFormat.format(request.getEndDate()));
@@ -307,7 +306,7 @@ public class CarReportServiceImpl implements CarReportService {
                     .setMarginBottom(15));
 
             // Table
-            float[] columnWidths = {40f, 120f, 110f, 150f, 100f, 110f, 90f, 90f};
+            float[] columnWidths = {40f, 120f, 110f, 150f, 100f, 110f, 90f, 90f, 100f};
             Table table = new Table(columnWidths);
             table.setWidth(UnitValue.createPercentValue(100));
 
@@ -319,11 +318,12 @@ public class CarReportServiceImpl implements CarReportService {
             addLeftAlignedHeaderCell(table, "Tình trạng", font, fontBold);
             addRightAlignedHeaderCell(table, "Giá ngày", font, fontBold);
             addRightAlignedHeaderCell(table, "Giá giờ", font, fontBold);
+            addHeaderCell(table, "Kết quả", font, fontBold); // Căn giữa cho Kết quả
 
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
 
             if (rentableCars.isEmpty()) {
-                Cell emptyCell = new Cell(1, 8)
+                Cell emptyCell = new Cell(1, 9)
                         .add(new Paragraph("Không có dữ liệu").setFont(font))
                         .setTextAlignment(TextAlignment.CENTER);
                 table.addCell(emptyCell);
@@ -338,6 +338,16 @@ public class CarReportServiceImpl implements CarReportService {
                     table.addCell(createBodyCell(defaultString(car.getCondition()), font));
                     table.addCell(createRightAlignedCell(formatCurrency(car.getDailyPrice(), currencyFormat), font));
                     table.addCell(createRightAlignedCell(formatCurrency(car.getHourlyPrice(), currencyFormat), font));
+                    
+                    // Cột Kết quả
+                    String result = (car.getStatus() == CarStatus.NOT_AVAILABLE) ? "Đã đặt thuê" : "Khả dụng";
+                    Cell resultCell = createBodyCell(result, font).setTextAlignment(TextAlignment.CENTER);
+                    if (car.getStatus() == CarStatus.NOT_AVAILABLE) {
+                        resultCell.setFontColor(DeviceRgb.RED);
+                    } else {
+                        resultCell.setFontColor(new DeviceRgb(82, 196, 26)); // Green color #52c41a
+                    }
+                    table.addCell(resultCell);
                 }
             }
 

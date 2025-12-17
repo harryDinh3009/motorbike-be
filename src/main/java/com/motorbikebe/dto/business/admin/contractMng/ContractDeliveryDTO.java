@@ -42,8 +42,13 @@ public class ContractDeliveryDTO {
     
     // Cập nhật thông tin thuê xe (nếu cần)
     private Boolean updateRentalInfo;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+07:00")
     private Date newStartDate;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+07:00")
     private Date newEndDate;
+    
     private BigDecimal newTotalAmount;
 }
 

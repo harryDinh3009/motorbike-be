@@ -1,5 +1,6 @@
 package com.motorbikebe.dto.business.admin.contractMng;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.motorbikebe.constant.enumconstant.ContractStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,9 +29,11 @@ public class ContractSaveDTO {
     private String source; // Walk-in, Facebook, Hotline, Zalo
     
     @NotNull(message = "Ngày thuê không được để trống")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+07:00")
     private Date startDate;
     
     @NotNull(message = "Ngày trả không được để trống")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+07:00")
     private Date endDate;
     
     private String pickupBranchId;

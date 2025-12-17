@@ -35,7 +35,9 @@ public class ContractDTO {
     
     // Contract Info
     private String source; // Nguồn tạo hợp đồng (web, app, referral...)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+07:00")
     private Date startDate; // Ngày/giờ bắt đầu thuê
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+07:00")
     private Date endDate; // Ngày/giờ kết thúc dự kiến
     private String pickupBranchId; // ID chi nhánh nhận xe
     private String pickupBranchName; // Tên chi nhánh nhận xe
