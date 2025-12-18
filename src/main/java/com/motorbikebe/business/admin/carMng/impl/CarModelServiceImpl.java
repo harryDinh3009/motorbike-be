@@ -4,8 +4,11 @@ import com.motorbikebe.business.admin.carMng.service.CarModelService;
 import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.config.exception.RestApiException;
 import com.motorbikebe.dto.business.admin.carMng.CarModelDTO;
+import com.motorbikebe.dto.business.admin.carMng.CarModelInfoDTO;
 import com.motorbikebe.dto.business.admin.carMng.CarModelSaveDTO;
+import com.motorbikebe.entity.domain.BrandEntity;
 import com.motorbikebe.entity.domain.CarModelEntity;
+import com.motorbikebe.repository.business.admin.BrandRepository;
 import com.motorbikebe.repository.business.admin.CarModelRepository;
 import com.motorbikebe.repository.business.admin.CarRepository;
 import jakarta.validation.Valid;
@@ -27,13 +30,21 @@ public class CarModelServiceImpl implements CarModelService {
 
     private final CarModelRepository carModelRepository;
     private final CarRepository carRepository;
+    private final BrandRepository brandRepository;
     private final ModelMapper modelMapper;
 
     @Override
     public List<CarModelDTO> getAllCarModels() {
         return carModelRepository.findAll(Sort.by(Sort.Direction.ASC, "name"))
                 .stream()
-                .map(entity -> modelMapper.map(entity, CarModelDTO.class))
+                .map(entity -> {
+                    CarModelDTO dto = modelMapper.map(entity, CarModelDTO.class);
+                    if (entity.getBrandId() != null) {
+                        brandRepository.findById(entity.getBrandId())
+                                .ifPresent(brand -> dto.setBrandName(brand.getName()));
+                    }
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -46,14 +57,40 @@ public class CarModelServiceImpl implements CarModelService {
     }
 
     @Override
+    public CarModelInfoDTO getCarModelInfo(String modelName) {
+        CarModelEntity entity = carModelRepository.findByName(modelName);
+        if (entity == null) {
+            throw new RestApiException(ApiStatus.NOT_FOUND, "Model not found: " + modelName);
+        }
+
+        CarModelInfoDTO info = new CarModelInfoDTO();
+        info.setBrandId(entity.getBrandId());
+        info.setBaseDailyPrice(entity.getBaseDailyPrice());
+        info.setBaseHourlyPrice(entity.getBaseHourlyPrice());
+
+        // Get brand name if brandId exists
+        if (entity.getBrandId() != null) {
+            BrandEntity brand = brandRepository.findById(entity.getBrandId()).orElse(null);
+            if (brand != null) {
+                info.setBrandName(brand.getName());
+            }
+        }
+
+        return info;
+    }
+
+    @Override
     @Transactional
     public CarModelDTO createCarModel(@Valid CarModelSaveDTO saveDTO) {
         validateNameUnique(saveDTO.getName(), null);
 
         CarModelEntity entity = CarModelEntity.builder()
                 .name(saveDTO.getName().trim())
-                .brand(StringUtils.trimToNull(saveDTO.getBrand()))
+                .brand(StringUtils.trimToNull(saveDTO.getBrand())) // Legacy field
+                .brandId(saveDTO.getBrandId())
                 .description(StringUtils.trimToNull(saveDTO.getDescription()))
+                .baseDailyPrice(saveDTO.getBaseDailyPrice())
+                .baseHourlyPrice(saveDTO.getBaseHourlyPrice())
                 .active(saveDTO.getActive() != null ? saveDTO.getActive() : Boolean.TRUE)
                 .build();
 
@@ -73,10 +110,19 @@ public class CarModelServiceImpl implements CarModelService {
         }
 
         if (saveDTO.getBrand() != null) {
-            entity.setBrand(StringUtils.trimToNull(saveDTO.getBrand()));
+            entity.setBrand(StringUtils.trimToNull(saveDTO.getBrand())); // Legacy field
+        }
+        if (saveDTO.getBrandId() != null) {
+            entity.setBrandId(saveDTO.getBrandId());
         }
         if (saveDTO.getDescription() != null) {
             entity.setDescription(StringUtils.trimToNull(saveDTO.getDescription()));
+        }
+        if (saveDTO.getBaseDailyPrice() != null) {
+            entity.setBaseDailyPrice(saveDTO.getBaseDailyPrice());
+        }
+        if (saveDTO.getBaseHourlyPrice() != null) {
+            entity.setBaseHourlyPrice(saveDTO.getBaseHourlyPrice());
         }
         if (saveDTO.getActive() != null) {
             entity.setActive(saveDTO.getActive());

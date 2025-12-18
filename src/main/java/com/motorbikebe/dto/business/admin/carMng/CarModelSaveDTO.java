@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 /**
  * DTO tạo/cập nhật mẫu xe
  */
@@ -18,9 +20,15 @@ public class CarModelSaveDTO {
     @NotBlank(message = "Tên mẫu xe không được để trống")
     private String name;
 
-    private String brand;
+    private String brand; // Legacy field
+
+    private String brandId;
 
     private String description;
+
+    private BigDecimal baseDailyPrice;
+
+    private BigDecimal baseHourlyPrice;
 
     private Boolean active;
 }

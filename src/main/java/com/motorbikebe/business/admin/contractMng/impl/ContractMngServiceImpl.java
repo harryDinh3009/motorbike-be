@@ -9,6 +9,7 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.motorbikebe.business.admin.contractMng.service.ContractMngService;
 import com.motorbikebe.business.common.service.service.CommonService;
+import java.util.Optional;
 import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.common.PageableObject;
 import com.motorbikebe.config.cloudinary.CloudinaryUploadImages;
@@ -1422,14 +1423,25 @@ public class ContractMngServiceImpl implements ContractMngService {
     private ContractCarDTO buildContractCarDTO(ContractCarEntity contractCar) {
         ContractCarDTO dto = modelMapper.map(contractCar, ContractCarDTO.class);
 
-        carRepository.findById(contractCar.getCarId()).ifPresent(car -> {
+        // Initialize vehicleCode to ensure it's set
+        dto.setVehicleCode(null);
+
+        Optional<CarEntity> carOpt = carRepository.findById(contractCar.getCarId());
+        if (carOpt.isPresent()) {
+            CarEntity car = carOpt.get();
             dto.setCarModel(car.getModel());
             dto.setCarType(car.getCarType());
             dto.setLicensePlate(car.getLicensePlate());
+            dto.setVehicleCode(car.getVehicleCode());
             dto.setStatus(car.getStatus().toString());
             dto.setCurrentOdometer(car.getCurrentOdometer()); // Lấy odometer hiện tại từ bảng car
-        });
+            log.debug("Car entity found - ID: {}, Model: {}, LicensePlate: {}, VehicleCode: {}",
+                     car.getId(), car.getModel(), car.getLicensePlate(), car.getVehicleCode());
+        } else {
+            log.warn("Car not found for ID: {}", contractCar.getCarId());
+        }
 
+        log.debug("Final ContractCarDTO vehicleCode: {}", dto.getVehicleCode());
         return dto;
     }
 

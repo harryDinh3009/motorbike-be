@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface CarModelRepository extends JpaRepository<CarModelEntity, String> {
 
+    CarModelEntity findByName(String name);
+
     boolean existsByNameIgnoreCase(String name);
 
     boolean existsByNameIgnoreCaseAndIdNot(String name, String id);

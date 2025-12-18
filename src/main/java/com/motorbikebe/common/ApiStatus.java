@@ -84,6 +84,7 @@ public enum ApiStatus {
     CONTRACT_DATE_CONFLICT(HttpStatus.BAD_REQUEST, "400034", "Thời gian thuê/trả bị trùng với hợp đồng khác."),
     RETURN_BRANCH_PERMISSION_DENIED(HttpStatus.BAD_REQUEST, "400035", "Bạn không có quyền thực hiện chức năng do không thuộc chi nhánh trả."),
     CAR_NOT_RETURNED_IN_PREVIOUS_CONTRACT(HttpStatus.BAD_REQUEST, "400036", "Xe chưa được trả trong hợp đồng gần nhất."),
+    VEHICLE_CODE_EXISTS(HttpStatus.BAD_REQUEST, "400037", "Mã xe đã tồn tại trong hệ thống."),
 
     // ===== 5xx: Server Errors =====
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500001", "An unexpected server error occurred."),

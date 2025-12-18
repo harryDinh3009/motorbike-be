@@ -23,6 +23,7 @@ public class ContractCarDTO {
     private String carModel; // Tên xe
     private String carType; // Loại xe
     private String licensePlate; // Biển số
+    private String vehicleCode; // Mã xe
     
     // Giá thuê
     private BigDecimal dailyPrice;

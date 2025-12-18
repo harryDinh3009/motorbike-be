@@ -20,6 +20,9 @@ public class CarSaveDTO {
     /** Biển số xe */
     private String licensePlate;
 
+    /** Mã xe */
+    private String vehicleCode;
+
     /** Loại xe */
     private String carType;
 

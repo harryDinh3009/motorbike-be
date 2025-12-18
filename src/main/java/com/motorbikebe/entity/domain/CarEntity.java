@@ -35,6 +35,10 @@ public class CarEntity extends PrimaryEntity {
     @Column(name = "license_plate", nullable = false, unique = true, length = 20)
     private String licensePlate;
 
+    /** Mã xe (tự sinh theo format XE0001) */
+    @Column(name = "vehicle_code", length = 50, unique = true)
+    private String vehicleCode;
+
     /** Loại xe (Xe số, Xe ga, Xe cao cấo, Xe tay côn) */
     @Column(name = "car_type", length = EntityProperties.LENGTH_NAME)
     @Nationalized

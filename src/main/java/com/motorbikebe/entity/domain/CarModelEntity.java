@@ -7,6 +7,8 @@ import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+
 /**
  * Danh mục mẫu xe dùng cho các nghiệp vụ
  */
@@ -24,10 +26,19 @@ public class CarModelEntity extends PrimaryEntity {
     String name;
 
     @Column(name = "brand", length = 100)
-    String brand;
+    String brand; // Legacy field - will be migrated to brand_id
+
+    @Column(name = "brand_id", length = 36)
+    String brandId;
 
     @Column(name = "description", length = 500)
     String description;
+
+    @Column(name = "base_daily_price", precision = 15, scale = 2)
+    BigDecimal baseDailyPrice;
+
+    @Column(name = "base_hourly_price", precision = 15, scale = 2)
+    BigDecimal baseHourlyPrice;
 
     @Column(name = "is_active")
     Boolean active;

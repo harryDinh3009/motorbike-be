@@ -311,11 +311,12 @@ public class CarReportServiceImpl implements CarReportService {
                     .setMarginBottom(15));
 
             // Table
-            float[] columnWidths = {40f, 120f, 110f, 150f, 100f, 110f, 90f, 90f, 100f};
+            float[] columnWidths = {40f, 100f, 120f, 110f, 150f, 100f, 110f, 90f, 90f, 100f};
             Table table = new Table(columnWidths);
             table.setWidth(UnitValue.createPercentValue(100));
 
             addHeaderCell(table, "STT", font, fontBold); // Căn giữa cho STT
+            addLeftAlignedHeaderCell(table, "Mã xe", font, fontBold);
             addLeftAlignedHeaderCell(table, "Mẫu xe", font, fontBold);
             addLeftAlignedHeaderCell(table, "Biển số", font, fontBold);
             addLeftAlignedHeaderCell(table, "Chi nhánh", font, fontBold);
@@ -328,7 +329,7 @@ public class CarReportServiceImpl implements CarReportService {
             NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
 
             if (rentableCars.isEmpty()) {
-                Cell emptyCell = new Cell(1, 9)
+                Cell emptyCell = new Cell(1, 10)
                         .add(new Paragraph("Không có dữ liệu").setFont(font))
                         .setTextAlignment(TextAlignment.CENTER);
                 table.addCell(emptyCell);
@@ -336,6 +337,7 @@ public class CarReportServiceImpl implements CarReportService {
                 int index = 1;
                 for (CarDTO car : rentableCars) {
                     table.addCell(createBodyCell(String.valueOf(index++), font).setTextAlignment(TextAlignment.CENTER)); // Căn giữa cho STT
+                    table.addCell(createBodyCell(defaultString(car.getVehicleCode()), font));
                     table.addCell(createBodyCell(defaultString(car.getModel()), font));
                     table.addCell(createBodyCell(defaultString(car.getLicensePlate()), font));
                     table.addCell(createBodyCell(defaultString(car.getBranchName()), font));

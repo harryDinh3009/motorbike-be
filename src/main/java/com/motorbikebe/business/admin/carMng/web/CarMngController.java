@@ -11,6 +11,7 @@ import com.motorbikebe.constant.classconstant.CarConstants;
 import com.motorbikebe.constant.enumconstant.CarStatus;
 import com.motorbikebe.dto.business.admin.carMng.AvailableCarDTO;
 import com.motorbikebe.dto.business.admin.carMng.*;
+import com.motorbikebe.dto.business.admin.carMng.CarModelInfoDTO;
 import com.motorbikebe.dto.business.admin.carMng.ConflictingContractDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class CarMngController {
 
     /**
      * Tìm kiếm xe có sẵn với phân trang
-     * - Chỉ lấy các xe thuộc chi nhánh của người đang đăng nhập
+     * - Lọc theo chi nhánh: nếu không truyền branchId thì mặc định lấy chi nhánh của người đang đăng nhập
      * - Nếu truyền startDate và endDate: kiểm tra xe có trong hợp đồng nào có thời gian trùng lặp không
      *   + Nếu trùng: chuyển status về NOT_AVAILABLE
      *   + Nếu không trùng: giữ nguyên status của xe
@@ -69,7 +70,7 @@ public class CarMngController {
     /**
      * Tìm kiếm xe khả dụng (lightweight) - chỉ trả về các field cần thiết
      * Dùng cho màn chọn xe khi tạo hợp đồng để tối ưu hiệu suất
-     * - Chỉ lấy các xe thuộc chi nhánh của người đang đăng nhập
+     * - Lọc theo chi nhánh: nếu không truyền branchId thì mặc định lấy chi nhánh của người đang đăng nhập
      * - Nếu truyền startDate và endDate: kiểm tra xe có trong hợp đồng nào có thời gian trùng lặp không
      *   + Nếu trùng: chuyển status về NOT_AVAILABLE
      *   + Nếu không trùng: giữ nguyên status của xe
@@ -149,6 +150,12 @@ public class CarMngController {
         return new ApiResponse<>(ApiStatus.SUCCESS, response);
     }
 
+    @GetMapping("/generate-vehicle-code")
+    public ApiResponse<String> generateNextVehicleCode() {
+        String nextCode = carMngService.generateNextVehicleCode();
+        return new ApiResponse<>(ApiStatus.SUCCESS, nextCode);
+    }
+
     /**
      * Upload ảnh xe
      *
@@ -180,6 +187,15 @@ public class CarMngController {
     @GetMapping("/car-models/manage")
     public ApiResponse<List<CarModelDTO>> getCarModelsForManage() {
         return new ApiResponse<>(ApiStatus.SUCCESS, carModelService.getAllCarModels());
+    }
+
+    /**
+     * Lấy thông tin model để populate vào car
+     */
+    @GetMapping("/car-model-info")
+    public ApiResponse<CarModelInfoDTO> getCarModelInfo(@RequestParam("modelName") String modelName) {
+        CarModelInfoDTO info = carModelService.getCarModelInfo(modelName);
+        return new ApiResponse<>(ApiStatus.SUCCESS, info);
     }
 
     /**
@@ -376,6 +392,7 @@ public class CarMngController {
                     saveDTO.setId(carDTO.getId());
                     saveDTO.setModel(carDTO.getModel());
                     saveDTO.setLicensePlate(carDTO.getLicensePlate());
+                    saveDTO.setVehicleCode(carDTO.getVehicleCode());
                     saveDTO.setCarType(carDTO.getCarType());
                     saveDTO.setBranchId(carDTO.getBranchId());
                     saveDTO.setBrandId(carDTO.getBrandId());

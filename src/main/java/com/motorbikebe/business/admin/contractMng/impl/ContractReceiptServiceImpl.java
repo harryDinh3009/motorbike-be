@@ -87,7 +87,7 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
                     .setTextAlignment(TextAlignment.CENTER)
                     .setMarginBottom(10));
 
-            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("HH:mm dd/MM/yyyy");
+            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
             dateTimeFormat.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
 
             // Sử dụng thời gian giao xe và nhận xe thực tế
@@ -128,12 +128,12 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
 
             int index = 1;
             for (ContractCarDTO car : cars) {
-                carTable.addCell(createBodyCell(String.valueOf(index++), font));
+                carTable.addCell(createBodyCell(String.valueOf(index++), font, TextAlignment.CENTER));
                 carTable.addCell(createBodyCell(defaultString(car.getCarType()), font));
                 carTable.addCell(createBodyCell(defaultString(car.getCarModel()), font));
                 carTable.addCell(createBodyCell(defaultString(car.getLicensePlate()), font));
             BigDecimal carAmount = calculateCarRentalAmount(contract, car);
-            carTable.addCell(createBodyCell(formatCurrency(carAmount, currencyFormat), font));
+            carTable.addCell(createBodyCell(formatCurrency(carAmount, currencyFormat), font, TextAlignment.RIGHT));
             }
             document.add(carTable);
 
@@ -176,6 +176,10 @@ public class ContractReceiptServiceImpl implements ContractReceiptService {
 
     private Cell createBodyCell(String text, PdfFont font) {
         return new Cell().add(new Paragraph(text).setFont(font).setFontSize(10));
+    }
+
+    private Cell createBodyCell(String text, PdfFont font, TextAlignment alignment) {
+        return new Cell().add(new Paragraph(text).setFont(font).setFontSize(10)).setTextAlignment(alignment);
     }
 
     private void addSummaryRow(Table table, String label, BigDecimal value, PdfFont font, PdfFont fontBold, NumberFormat format) {

@@ -10,6 +10,7 @@ import com.motorbikebe.entity.domain.CarEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,10 +20,14 @@ import java.util.List;
 @Repository
 public interface CarRepository extends JpaRepository<CarEntity, String> {
 
+
+    CarEntity findByLicensePlate(String licensePlate);
+
     @Query(value = """
             SELECT c.id,
                    c.model,
                    c.license_plate AS licensePlate,
+                   c.vehicle_code AS vehicleCode,
                    c.car_type AS carType,
                    c.branch_id AS branchId,
                    b.name AS branchName,
@@ -49,10 +54,12 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
             LEFT JOIN brand br ON c.brand_id = br.id
-            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
-                   OR c.model LIKE %:#{#req.keyword}% 
-                   OR c.license_plate LIKE %:#{#req.keyword}%)
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = ''
+                   OR c.model LIKE %:#{#req.keyword}%
+                   OR c.license_plate LIKE %:#{#req.keyword}%
+                   OR c.vehicle_code LIKE %:#{#req.keyword}%)
             AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
+            AND (:#{#req.brandId} IS NULL OR :#{#req.brandId} = '' OR c.brand_id = :#{#req.brandId})
             AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
             AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
@@ -63,10 +70,12 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
             LEFT JOIN brand br ON c.brand_id = br.id
-            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
-                   OR c.model LIKE %:#{#req.keyword}% 
-                   OR c.license_plate LIKE %:#{#req.keyword}%)
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = ''
+                   OR c.model LIKE %:#{#req.keyword}%
+                   OR c.license_plate LIKE %:#{#req.keyword}%
+                   OR c.vehicle_code LIKE %:#{#req.keyword}%)
             AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
+            AND (:#{#req.brandId} IS NULL OR :#{#req.brandId} = '' OR c.brand_id = :#{#req.brandId})
             AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
             AND (:#{#req.condition} IS NULL OR :#{#req.condition} = '' OR c.condition = :#{#req.condition})
@@ -74,7 +83,9 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             """, nativeQuery = true)
     Page<CarDTO> searchCars(Pageable pageable, @Param("req") CarSearchDTO req);
 
-    CarEntity findByLicensePlate(String licensePlate);
+    CarEntity findByVehicleCode(String vehicleCode);
+
+    List<CarEntity> findByVehicleCodeIsNull();
 
     List<CarEntity> findByStatus(CarStatus status);
     
@@ -100,6 +111,12 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             """, nativeQuery = true)
     Long existsByBrandId(@Param("brandId") String brandId);
 
+    /**
+     * Generate mã xe mới (XExxxx)
+     */
+    @Query(value = "SELECT COALESCE(MAX(CAST(SUBSTRING(vehicle_code, 3) AS UNSIGNED)), 0) FROM car WHERE vehicle_code LIKE 'XE%'", nativeQuery = true)
+    Integer getMaxVehicleCodeNumber();
+
     @Query(value = """
             SELECT COUNT(c.id)
             FROM car c
@@ -112,6 +129,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             SELECT c.id,
                    c.model,
                    c.license_plate AS licensePlate,
+                   c.vehicle_code AS vehicleCode,
                    c.car_type AS carType,
                    c.branch_id AS branchId,
                    b.name AS branchName,
@@ -158,7 +176,8 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             LEFT JOIN brand br ON c.brand_id = br.id
             WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
                    OR c.model LIKE %:#{#req.keyword}% 
-                   OR c.license_plate LIKE %:#{#req.keyword}%)
+                   OR c.license_plate LIKE %:#{#req.keyword}%
+                   OR c.vehicle_code LIKE %:#{#req.keyword}%)
             AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
             AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
@@ -172,7 +191,8 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             LEFT JOIN brand br ON c.brand_id = br.id
             WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
                    OR c.model LIKE %:#{#req.keyword}% 
-                   OR c.license_plate LIKE %:#{#req.keyword}%)
+                   OR c.license_plate LIKE %:#{#req.keyword}%
+                   OR c.vehicle_code LIKE %:#{#req.keyword}%)
             AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
             AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
@@ -195,7 +215,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.daily_price AS dailyPrice,
                    c.hourly_price AS hourlyPrice,
                    CASE
-                       WHEN :#{#req.startDate} IS NOT NULL 
+                       WHEN :#{#req.startDate} IS NOT NULL
                             AND :#{#req.endDate} IS NOT NULL
                             AND EXISTS (
                                 SELECT 1 
@@ -216,9 +236,10 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
                    c.image_url AS imageUrl
             FROM car c
             LEFT JOIN branch b ON c.branch_id = b.id
-            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
-                   OR c.model LIKE %:#{#req.keyword}% 
-                   OR c.license_plate LIKE %:#{#req.keyword}%)
+            WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = ''
+                   OR c.model LIKE %:#{#req.keyword}%
+                   OR c.license_plate LIKE %:#{#req.keyword}%
+                   OR c.vehicle_code LIKE %:#{#req.keyword}%)
             AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
             AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
@@ -230,7 +251,8 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             LEFT JOIN branch b ON c.branch_id = b.id
             WHERE (:#{#req.keyword} IS NULL OR :#{#req.keyword} = '' 
                    OR c.model LIKE %:#{#req.keyword}% 
-                   OR c.license_plate LIKE %:#{#req.keyword}%)
+                   OR c.license_plate LIKE %:#{#req.keyword}%
+                   OR c.vehicle_code LIKE %:#{#req.keyword}%)
             AND (:#{#req.branchId} IS NULL OR :#{#req.branchId} = '' OR c.branch_id = :#{#req.branchId})
             AND (:#{#req.modelName} IS NULL OR :#{#req.modelName} = '' OR c.model = :#{#req.modelName})
             AND (:#{#req.carType} IS NULL OR :#{#req.carType} = '' OR c.car_type = :#{#req.carType})
@@ -242,6 +264,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             SELECT c.id,
                    c.model,
                    c.license_plate AS licensePlate,
+                   c.vehicle_code AS vehicleCode,
                    c.car_type AS carType,
                    c.branch_id AS branchId,
                    b.name AS branchName,
@@ -295,6 +318,7 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             SELECT c.id,
                    c.model,
                    c.license_plate AS licensePlate,
+                   c.vehicle_code AS vehicleCode,
                    c.car_type AS carType,
                    c.branch_id AS branchId,
                    b.name AS branchName,

@@ -53,6 +53,13 @@ public interface CarMngService {
     List<CarDTO> getAllCars();
 
     /**
+     * Tạo mã xe tiếp theo
+     *
+     * @return String mã xe tiếp theo (XE0001, XE0002...)
+     */
+    String generateNextVehicleCode();
+
+    /**
      * Upload ảnh xe
      *
      * @param carId ID xe
@@ -63,7 +70,7 @@ public interface CarMngService {
 
     /**
      * Tìm kiếm xe có sẵn với phân trang
-     * - Chỉ lấy các xe thuộc chi nhánh của người đang đăng nhập
+     * - Lọc theo chi nhánh: nếu không truyền branchId thì mặc định lấy chi nhánh của người đang đăng nhập
      * - Nếu truyền startDate và endDate: kiểm tra xe có trong hợp đồng nào có thời gian trùng lặp không
      *   + Nếu trùng: chuyển status về NOT_AVAILABLE
      *   + Nếu không trùng: giữ nguyên status của xe
@@ -76,7 +83,7 @@ public interface CarMngService {
     /**
      * Tìm kiếm xe khả dụng (lightweight) - chỉ trả về các field cần thiết
      * Dùng cho màn chọn xe khi tạo hợp đồng để tối ưu hiệu suất
-     * - Chỉ lấy các xe thuộc chi nhánh của người đang đăng nhập
+     * - Lọc theo chi nhánh: nếu không truyền branchId thì mặc định lấy chi nhánh của người đang đăng nhập
      * - Nếu truyền startDate và endDate: kiểm tra xe có trong hợp đồng nào có thời gian trùng lặp không
      *   + Nếu trùng: chuyển status về NOT_AVAILABLE
      *   + Nếu không trùng: giữ nguyên status của xe

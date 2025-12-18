@@ -8,21 +8,15 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 /**
- * DTO hiển thị mẫu xe
+ * DTO chứa thông tin model để populate vào car
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CarModelDTO {
-    private String id;
-    private String name;
-    private String brand; // Legacy field
+public class CarModelInfoDTO {
     private String brandId;
-    private String brandName; // For display
-    private String description;
+    private String brandName;
     private BigDecimal baseDailyPrice;
     private BigDecimal baseHourlyPrice;
-    private Boolean active;
 }
-

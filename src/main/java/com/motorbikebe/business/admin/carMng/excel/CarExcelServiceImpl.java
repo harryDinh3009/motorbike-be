@@ -1,5 +1,6 @@
 package com.motorbikebe.business.admin.carMng.excel;
 
+import com.motorbikebe.business.admin.carMng.service.CarMngService;
 import com.motorbikebe.business.admin.carMng.service.CarModelService;
 import com.motorbikebe.common.ApiStatus;
 import com.motorbikebe.config.exception.RestApiException;
@@ -42,10 +43,11 @@ public class CarExcelServiceImpl implements CarExcelService {
     private final BranchRepository branchRepository;
     private final BrandRepository brandRepository;
     private final CarModelService carModelService;
+    private final CarMngService carMngService;
 
     // Column headers
     private static final String[] HEADERS = {
-            "Mẫu xe (*)", "Biển số xe (*)", "Loại xe (*)", "Chi nhánh", "Hãng xe",
+            "Mã xe", "Mẫu xe (*)", "Biển số xe (*)", "Loại xe (*)", "Chi nhánh", "Hãng xe",
             "Giá ngày (VNĐ)", "Giá giờ (VNĐ)", "Odometer (km)",
             "Trạng thái (*)", "Ghi chú", "Năm SX", "Xuất xứ",
             "Giá trị xe (VNĐ)", "Số khung", "Số máy", "Màu sắc",
@@ -53,7 +55,7 @@ public class CarExcelServiceImpl implements CarExcelService {
             "Số HĐ bảo hiểm", "Ngày hết hạn BH"
     };
 
-    private static final int[] REQUIRED_COLUMNS = {0, 1, 2, 8}; // Mẫu xe, Biển số, Loại xe, Trạng thái
+    private static final int[] REQUIRED_COLUMNS = {1, 2, 3, 9}; // Mẫu xe, Biển số, Loại xe, Trạng thái
 
     @Override
     public ByteArrayOutputStream downloadTemplate() {
@@ -77,10 +79,10 @@ public class CarExcelServiceImpl implements CarExcelService {
 
             // Create sample data rows
             String[][] sampleData = {
-                    {"Honda XR150L", "33D1-99765", "Xe cao cấp", "Chi nhánh trung tâm", "Honda", "300000", "40000", "12000", "Hoạt động", "Xe hoạt động tốt", "2010", "Hà Nội"},
-                    {"Honda Winner 150", "33L1-34568", "Xe tay côn", "Chi nhánh trung tâm", "Honda", "350000", "50000", "13000", "Hoạt động", "", "2011", "Hà Nội"},
-                    {"Honda Vision", "33G1-55666", "Xe ga", "Chi nhánh trung tâm", "Honda", "400000", "40000", "12000", "Hoạt động", "", "2010", "Hà Nội"},
-                    {"Honda Wave Alpha", "33N1-22222", "Xe số", "Chi nhánh trung tâm", "Honda", "400000", "50000", "13000", "Hoạt động", "", "2011", "Hà Nội"}
+                    {"XE0001", "Honda XR150L", "33D1-99765", "Xe cao cấp", "Chi nhánh trung tâm", "Honda", "300000", "40000", "12000", "Hoạt động", "Xe hoạt động tốt", "2010", "Hà Nội", "35000000", "SC111111", "MC222222", "Đen", "123456789", "Nguyễn Văn A", "Hà Nội", "BH123456", "2025-12-31"},
+                    {"XE0002", "Honda Winner 150", "33L1-34568", "Xe tay côn", "Chi nhánh trung tâm", "Honda", "350000", "50000", "13000", "Hoạt động", "", "2011", "Hà Nội", "40000000", "SC222222", "MC333333", "Đỏ", "234567890", "Trần Thị B", "Hà Nội", "BH234567", "2025-11-30"},
+                    {"XE0003", "Honda Vision", "33G1-55666", "Xe ga", "Chi nhánh trung tâm", "Honda", "400000", "40000", "12000", "Hoạt động", "", "2010", "Hà Nội", "45000000", "SC333333", "MC444444", "Trắng", "345678901", "Lê Văn C", "Hà Nội", "BH345678", "2025-10-31"},
+                    {"XE0004", "Honda Wave Alpha", "33N1-22222", "Xe số", "Chi nhánh trung tâm", "Honda", "400000", "50000", "13000", "Hoạt động", "", "2011", "Hà Nội", "38000000", "SC444444", "MC555555", "Xanh dương", "456789012", "Phạm Thị D", "Hà Nội", "BH456789", "2025-09-30"}
             };
 
             // Populate sample data rows
@@ -92,8 +94,8 @@ public class CarExcelServiceImpl implements CarExcelService {
                     cell.setCellStyle(dataStyle);
                     
                     if (j < rowData.length && !rowData[j].isEmpty()) {
-                        // Columns with numbers: Giá ngày (5), Giá giờ (6), Odometer (7), Năm SX (10)
-                        if (j == 5 || j == 6 || j == 7 || j == 10) {
+                        // Columns with numbers: Giá ngày (6), Giá giờ (7), Odometer (8), Năm SX (11), Giá trị xe (12)
+                        if (j == 6 || j == 7 || j == 8 || j == 11 || j == 12) {
                             try {
                                 cell.setCellValue(Double.parseDouble(rowData[j]));
                             } catch (NumberFormatException e) {
@@ -120,7 +122,7 @@ public class CarExcelServiceImpl implements CarExcelService {
 
             // Auto-size specific columns
             for (int i = 0; i < HEADERS.length; i++) {
-                if (i == 0 || i == 1 || i == 2 || i == 3) { // Auto-size important columns
+                if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4) { // Auto-size important columns: Mã xe, Mẫu xe, Biển số, Loại xe, Chi nhánh
                     sheet.autoSizeColumn(i);
                 }
             }
@@ -175,24 +177,48 @@ public class CarExcelServiceImpl implements CarExcelService {
             List<String> licensePlates = carsToSave.stream()
                     .map(CarSaveDTO::getLicensePlate)
                     .collect(Collectors.toList());
-            long uniqueCount = licensePlates.stream().distinct().count();
-            if (uniqueCount < licensePlates.size()) {
+            long uniqueLicenseCount = licensePlates.stream().distinct().count();
+            if (uniqueLicenseCount < licensePlates.size()) {
                 throw new RuntimeException("File có biển số xe trùng lặp");
+            }
+
+            // Validate duplicate vehicle codes trong file (chỉ check những cái có nhập)
+            List<String> vehicleCodes = carsToSave.stream()
+                    .map(dto -> dto.getVehicleCode())
+                    .filter(code -> StringUtils.isNotBlank(code))
+                    .collect(Collectors.toList());
+            long uniqueVehicleCodeCount = vehicleCodes.stream().distinct().count();
+            if (uniqueVehicleCodeCount < vehicleCodes.size()) {
+                throw new RuntimeException("File có mã xe trùng lặp");
+            }
+
+            // Validate vehicle code format (XE0001, XE0002, etc.)
+            for (String code : vehicleCodes) {
+                if (!code.matches("^XE\\d{4}$")) {
+                    throw new RuntimeException("Mã xe không đúng định dạng (XE0001, XE0002, ...): " + code);
+                }
             }
 
             // Check duplicate with database
             for (CarSaveDTO carDTO : carsToSave) {
-                CarEntity existing = carRepository.findByLicensePlate(carDTO.getLicensePlate());
-                if (existing != null) {
-                    throw new RuntimeException("Xảy ra lỗi trùng dữ liệu biến số xe nên không thể import xe");
+                // Check license plate
+                CarEntity existingByPlate = carRepository.findByLicensePlate(carDTO.getLicensePlate());
+                if (existingByPlate != null) {
+                    throw new RuntimeException("Xảy ra lỗi trùng dữ liệu biển số xe nên không thể import xe");
+                }
+
+                // Check vehicle code if provided
+                if (StringUtils.isNotBlank(carDTO.getVehicleCode())) {
+                    CarEntity existingByCode = carRepository.findByVehicleCode(carDTO.getVehicleCode());
+                    if (existingByCode != null) {
+                        throw new RuntimeException("Mã xe đã tồn tại: " + carDTO.getVehicleCode());
+                    }
                 }
             }
 
-            // Save all cars
+            // Save all cars using CarMngService to handle vehicle code logic
             for (CarSaveDTO carDTO : carsToSave) {
-                CarEntity carEntity = new CarEntity();
-                mapDTOToEntity(carDTO, carEntity);
-                carRepository.save(carEntity);
+                carMngService.saveCar(carDTO);
             }
 
             return carsToSave.size();
@@ -297,41 +323,41 @@ public class CarExcelServiceImpl implements CarExcelService {
 
         DataValidationHelper validationHelper = sheet.getDataValidationHelper();
 
-        // Column A: Mẫu xe (dynamic)
+        // Column B: Mẫu xe (dynamic)
         List<String> carModels = carModelService.getActiveModelNames();
         if (!carModels.isEmpty()) {
             createDropdownList(hiddenSheet, 0, carModels);
-            addDropdownWithFormula(sheet, validationHelper, 1, 10, 0, 0,
+            addDropdownWithFormula(sheet, validationHelper, 1, 10, 1, 1,
                     "Dropdowns!$A$1:$A$" + carModels.size());
         }
 
-        // Column B: Loại xe (CAR_TYPES)
+        // Column D: Loại xe (CAR_TYPES)
         List<String> carTypes = CarConstants.CAR_TYPES;
         createDropdownList(hiddenSheet, 1, carTypes);
-        addDropdownWithFormula(sheet, validationHelper, 1, 10, 2, 2,
+        addDropdownWithFormula(sheet, validationHelper, 1, 10, 3, 3,
                 "Dropdowns!$B$1:$B$" + carTypes.size());
 
-        // Column C: Chi nhánh (lấy từ DB)
+        // Column E: Chi nhánh (lấy từ DB)
         List<String> branchNames = branchRepository.findAll().stream()
                 .map(BranchEntity::getName)
                 .collect(Collectors.toList());
         if (!branchNames.isEmpty()) {
             createDropdownList(hiddenSheet, 2, branchNames);
-            addDropdownWithFormula(sheet, validationHelper, 1, 10, 3, 3,
+            addDropdownWithFormula(sheet, validationHelper, 1, 10, 4, 4,
                     "Dropdowns!$C$1:$C$" + branchNames.size());
         }
 
-        // Column D: Hãng xe (lấy từ DB)
+        // Column F: Hãng xe (lấy từ DB)
         List<String> brandNames = brandRepository.findAllByOrderByNameAsc().stream()
                 .map(BrandEntity::getName)
                 .collect(Collectors.toList());
         if (!brandNames.isEmpty()) {
-            createDropdownList(hiddenSheet, 6, brandNames);
-            addDropdownWithFormula(sheet, validationHelper, 1, 10, 4, 4,
-                    "Dropdowns!$G$1:$G$" + brandNames.size());
+            createDropdownList(hiddenSheet, 3, brandNames);
+            addDropdownWithFormula(sheet, validationHelper, 1, 10, 5, 5,
+                    "Dropdowns!$D$1:$D$" + brandNames.size());
         }
 
-        // Column E: Trạng thái (CAR_STATUSES) - Đầy đủ 5 trạng thái
+        // Column J: Trạng thái (CAR_STATUSES) - Đầy đủ 5 trạng thái
         List<String> statuses = Arrays.asList(
                 CarStatus.AVAILABLE.getDescription(),        // Hoạt động
                 CarStatus.NOT_AVAILABLE.getDescription(),     // Không sẵn sàng
@@ -340,13 +366,13 @@ public class CarExcelServiceImpl implements CarExcelService {
                 CarStatus.LOST.getDescription()               // Bị mất
         );
         createDropdownList(hiddenSheet, 4, statuses);
-        addDropdownWithFormula(sheet, validationHelper, 1, 10, 8, 8,
+        addDropdownWithFormula(sheet, validationHelper, 1, 10, 9, 9,
                 "Dropdowns!$E$1:$E$" + statuses.size());
 
-        // Column F: Màu sắc (CAR_COLORS)
+        // Column Q: Màu sắc (CAR_COLORS)
         List<String> colors = CarConstants.CAR_COLORS;
         createDropdownList(hiddenSheet, 5, colors);
-        addDropdownWithFormula(sheet, validationHelper, 1, 10, 15, 15,
+        addDropdownWithFormula(sheet, validationHelper, 1, 10, 16, 16,
                 "Dropdowns!$F$1:$F$" + colors.size());
     }
 
@@ -395,12 +421,17 @@ public class CarExcelServiceImpl implements CarExcelService {
     private CarSaveDTO parseRowToCarDTO(Row row, int rowNum) {
         CarSaveDTO dto = new CarSaveDTO();
 
-        dto.setModel(getCellValueAsString(row.getCell(0)));
-        dto.setLicensePlate(getCellValueAsString(row.getCell(1)));
-        dto.setCarType(getCellValueAsString(row.getCell(2)));
+        // Vehicle code (optional)
+        String vehicleCode = getCellValueAsString(row.getCell(0));
+        log.debug("Parsing row {}, vehicle code from cell 0: '{}'", rowNum, vehicleCode);
+        dto.setVehicleCode(vehicleCode);
+
+        dto.setModel(getCellValueAsString(row.getCell(1)));
+        dto.setLicensePlate(getCellValueAsString(row.getCell(2)));
+        dto.setCarType(getCellValueAsString(row.getCell(3)));
 
         // Branch - tìm ID từ tên
-        String branchName = getCellValueAsString(row.getCell(3));
+        String branchName = getCellValueAsString(row.getCell(4));
         if (StringUtils.isNotBlank(branchName)) {
             dto.setBranchId(branchRepository.findAll().stream()
                     .filter(b -> b.getName().equals(branchName))
@@ -410,7 +441,7 @@ public class CarExcelServiceImpl implements CarExcelService {
         }
 
         // Brand - tìm ID từ tên
-        String brandName = getCellValueAsString(row.getCell(4));
+        String brandName = getCellValueAsString(row.getCell(5));
         if (StringUtils.isNotBlank(brandName)) {
             dto.setBrandId(brandRepository.findAllByOrderByNameAsc().stream()
                     .filter(b -> b.getName().equals(brandName))
@@ -419,12 +450,12 @@ public class CarExcelServiceImpl implements CarExcelService {
                     .orElse(null));
         }
 
-        dto.setDailyPrice(getCellValueAsBigDecimal(row.getCell(5)));
-        dto.setHourlyPrice(getCellValueAsBigDecimal(row.getCell(6)));
-        dto.setCurrentOdometer(getCellValueAsInteger(row.getCell(7)));
+        dto.setDailyPrice(getCellValueAsBigDecimal(row.getCell(6)));
+        dto.setHourlyPrice(getCellValueAsBigDecimal(row.getCell(7)));
+        dto.setCurrentOdometer(getCellValueAsInteger(row.getCell(8)));
 
         // Status - convert description to enum
-        String statusDesc = getCellValueAsString(row.getCell(8));
+        String statusDesc = getCellValueAsString(row.getCell(9));
         if (StringUtils.isNotBlank(statusDesc)) {
             for (CarStatus status : CarStatus.values()) {
                 if (status.getDescription().equals(statusDesc)) {
@@ -434,18 +465,18 @@ public class CarExcelServiceImpl implements CarExcelService {
             }
         }
 
-        dto.setNote(getCellValueAsString(row.getCell(9)));
-        dto.setYearOfManufacture(getCellValueAsInteger(row.getCell(10)));
-        dto.setOrigin(getCellValueAsString(row.getCell(11)));
-        dto.setValue(getCellValueAsBigDecimal(row.getCell(12)));
-        dto.setFrameNumber(getCellValueAsString(row.getCell(13)));
-        dto.setEngineNumber(getCellValueAsString(row.getCell(14)));
-        dto.setColor(getCellValueAsString(row.getCell(15)));
-        dto.setRegistrationNumber(getCellValueAsString(row.getCell(16)));
-        dto.setRegisteredOwnerName(getCellValueAsString(row.getCell(17)));
-        dto.setRegistrationPlace(getCellValueAsString(row.getCell(18)));
-        dto.setInsuranceContractNumber(getCellValueAsString(row.getCell(19)));
-        dto.setInsuranceExpiryDate(getCellValueAsDate(row.getCell(20)));
+        dto.setNote(getCellValueAsString(row.getCell(10)));
+        dto.setYearOfManufacture(getCellValueAsInteger(row.getCell(11)));
+        dto.setOrigin(getCellValueAsString(row.getCell(12)));
+        dto.setValue(getCellValueAsBigDecimal(row.getCell(13)));
+        dto.setFrameNumber(getCellValueAsString(row.getCell(14)));
+        dto.setEngineNumber(getCellValueAsString(row.getCell(15)));
+        dto.setColor(getCellValueAsString(row.getCell(16)));
+        dto.setRegistrationNumber(getCellValueAsString(row.getCell(17)));
+        dto.setRegisteredOwnerName(getCellValueAsString(row.getCell(18)));
+        dto.setRegistrationPlace(getCellValueAsString(row.getCell(19)));
+        dto.setInsuranceContractNumber(getCellValueAsString(row.getCell(20)));
+        dto.setInsuranceExpiryDate(getCellValueAsDate(row.getCell(21)));
 
         return dto;
     }
@@ -462,6 +493,14 @@ public class CarExcelServiceImpl implements CarExcelService {
 
         if (StringUtils.isBlank(dto.getLicensePlate())) {
             errors.add("Biển số xe không được để trống");
+        }
+
+        // Validate vehicle code if provided
+        if (StringUtils.isNotBlank(dto.getVehicleCode())) {
+            // Check format (XE + 4 digits)
+            if (!dto.getVehicleCode().matches("^XE\\d{4}$")) {
+                errors.add("Mã xe phải có format XE0001, XE0002, ...");
+            }
         }
 
         if (StringUtils.isBlank(dto.getCarType())) {
@@ -488,6 +527,7 @@ public class CarExcelServiceImpl implements CarExcelService {
     private void populateCarRow(Row row, CarSaveDTO car, CellStyle dataStyle, CellStyle dateStyle, CellStyle numberStyle) {
         int colNum = 0;
 
+        createCell(row, colNum++, car.getVehicleCode(), dataStyle);
         createCell(row, colNum++, car.getModel(), dataStyle);
         createCell(row, colNum++, car.getLicensePlate(), dataStyle);
         createCell(row, colNum++, car.getCarType(), dataStyle);
@@ -626,29 +666,5 @@ public class CarExcelServiceImpl implements CarExcelService {
         return null;
     }
 
-    private void mapDTOToEntity(CarSaveDTO dto, CarEntity entity) {
-        entity.setModel(dto.getModel());
-        entity.setLicensePlate(dto.getLicensePlate());
-        entity.setCarType(dto.getCarType());
-        entity.setBranchId(dto.getBranchId());
-        entity.setBrandId(StringUtils.isNotBlank(dto.getBrandId()) ? dto.getBrandId() : null);
-        entity.setDailyPrice(dto.getDailyPrice());
-        entity.setHourlyPrice(dto.getHourlyPrice());
-        entity.setCondition(dto.getCondition());
-        entity.setCurrentOdometer(dto.getCurrentOdometer());
-        entity.setStatus(dto.getStatus());
-        entity.setNote(dto.getNote());
-        entity.setYearOfManufacture(dto.getYearOfManufacture());
-        entity.setOrigin(dto.getOrigin());
-        entity.setValue(dto.getValue());
-        entity.setFrameNumber(dto.getFrameNumber());
-        entity.setEngineNumber(dto.getEngineNumber());
-        entity.setColor(dto.getColor());
-        entity.setRegistrationNumber(dto.getRegistrationNumber());
-        entity.setRegisteredOwnerName(dto.getRegisteredOwnerName());
-        entity.setRegistrationPlace(dto.getRegistrationPlace());
-        entity.setInsuranceContractNumber(dto.getInsuranceContractNumber());
-        entity.setInsuranceExpiryDate(dto.getInsuranceExpiryDate());
-    }
 }
 

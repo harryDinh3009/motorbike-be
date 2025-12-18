@@ -19,6 +19,7 @@ import com.motorbikebe.repository.business.admin.ContractCarRepository;
 import com.motorbikebe.util.CloudinaryUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class CarMngServiceImpl implements CarMngService {
 
     private final CarRepository carRepository;
@@ -68,6 +70,7 @@ public class CarMngServiceImpl implements CarMngService {
         }
 
         CarDTO carDTO = modelMapper.map(carEntity.get(), CarDTO.class);
+
         if (carDTO.getStatus() != null) {
             carDTO.setStatusNm(carDTO.getStatus().getDescription());
         }
@@ -101,6 +104,39 @@ public class CarMngServiceImpl implements CarMngService {
 
         carEntity.setModel(saveDTO.getModel());
         carEntity.setLicensePlate(saveDTO.getLicensePlate());
+
+        // Xử lý mã xe
+        String inputVehicleCode = saveDTO.getVehicleCode();
+        String currentCarId = saveDTO.getId();
+        boolean isEdit = StringUtils.isNotBlank(currentCarId);
+
+        log.debug("Processing vehicle code - input: '{}', currentCarId: '{}', isEdit: {}", inputVehicleCode, currentCarId, isEdit);
+
+        if (StringUtils.isBlank(inputVehicleCode)) {
+            // Tự sinh mã xe nếu không được cung cấp
+            String vehicleCode = generateNextVehicleCode();
+            carEntity.setVehicleCode(vehicleCode);
+            log.debug("Generated new vehicle code: {}", vehicleCode);
+        } else {
+            // Validate unique nếu người dùng nhập
+            CarEntity existingCar = carRepository.findByVehicleCode(inputVehicleCode);
+
+            if (existingCar != null) {
+                String existingCarId = existingCar.getId();
+
+                // Nếu là edit và ID khác nhau → conflict
+                if (isEdit && !existingCarId.equals(currentCarId)) {
+                    throw new RestApiException(ApiStatus.VEHICLE_CODE_EXISTS);
+                } else if (!isEdit) {
+                    // Create mode và mã đã tồn tại
+                    throw new RestApiException(ApiStatus.VEHICLE_CODE_EXISTS);
+                }
+            }
+
+            carEntity.setVehicleCode(inputVehicleCode);
+            log.debug("Set vehicle code from input: {}", inputVehicleCode);
+        }
+
         carEntity.setCarType(saveDTO.getCarType());
         carEntity.setBranchId(saveDTO.getBranchId());
         carEntity.setBrandId(StringUtils.isNotBlank(saveDTO.getBrandId()) ? saveDTO.getBrandId() : null);
@@ -162,6 +198,13 @@ public class CarMngServiceImpl implements CarMngService {
     }
 
     @Override
+    public String generateNextVehicleCode() {
+        Integer maxNumber = carRepository.getMaxVehicleCodeNumber();
+        int nextNumber = (maxNumber != null ? maxNumber : 0) + 1;
+        return String.format("XE%04d", nextNumber);
+    }
+
+    @Override
     @Transactional
     public String uploadCarImage(String carId, MultipartFile file) {
         // Tìm xe
@@ -192,11 +235,18 @@ public class CarMngServiceImpl implements CarMngService {
 
     @Override
     public PageableObject<CarDTO> searchAvailableCars(CarSearchDTO searchDTO) {
-        // Lấy thông tin user hiện tại
-        UserCurrentInfoDTO userCurrentInfo = commonService.getUserCurrentInfo();
-        if (userCurrentInfo != null && StringUtils.isNotBlank(userCurrentInfo.getBranchId())) {
-            // Set branchId của user hiện tại vào searchDTO để lọc xe theo chi nhánh
-            searchDTO.setBranchId(userCurrentInfo.getBranchId());
+        // Chỉ set branchId mặc định nếu frontend không truyền branchId (cho phép filter theo chi nhánh)
+        if (StringUtils.isBlank(searchDTO.getBranchId())) {
+            try {
+                UserCurrentInfoDTO userCurrentInfo = commonService.getUserCurrentInfo();
+                if (userCurrentInfo != null && StringUtils.isNotBlank(userCurrentInfo.getBranchId())) {
+                    // Set branchId của user hiện tại làm mặc định
+                    searchDTO.setBranchId(userCurrentInfo.getBranchId());
+                }
+            } catch (Exception e) {
+                log.warn("Failed to get user current info for branch filter: {}", e.getMessage());
+                // Continue without setting branchId
+            }
         }
 
         Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
@@ -214,11 +264,18 @@ public class CarMngServiceImpl implements CarMngService {
 
     @Override
     public PageableObject<AvailableCarDTO> searchAvailableCarsLight(CarSearchDTO searchDTO) {
-        // Lấy thông tin user hiện tại
-        UserCurrentInfoDTO userCurrentInfo = commonService.getUserCurrentInfo();
-        if (userCurrentInfo != null && StringUtils.isNotBlank(userCurrentInfo.getBranchId())) {
-            // Set branchId của user hiện tại vào searchDTO để lọc xe theo chi nhánh
-            searchDTO.setBranchId(userCurrentInfo.getBranchId());
+        // Chỉ set branchId mặc định nếu frontend không truyền branchId (cho phép filter theo chi nhánh)
+        if (StringUtils.isBlank(searchDTO.getBranchId())) {
+            try {
+                UserCurrentInfoDTO userCurrentInfo = commonService.getUserCurrentInfo();
+                if (userCurrentInfo != null && StringUtils.isNotBlank(userCurrentInfo.getBranchId())) {
+                    // Set branchId của user hiện tại làm mặc định
+                    searchDTO.setBranchId(userCurrentInfo.getBranchId());
+                }
+            } catch (Exception e) {
+                log.warn("Failed to get user current info for branch filter: {}", e.getMessage());
+                // Continue without setting branchId
+            }
         }
 
         Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
