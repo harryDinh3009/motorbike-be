@@ -24,6 +24,7 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
             COALESCE(u.email, '-') AS email,
             COALESCE(u.gender, '-') AS genderNm,
             COALESCE(sr.rl_nm, '-') AS roleNm,
+            COALESCE(sr.rl_cd, '-') AS roleCd,
             COALESCE(u.phone_number, '-') AS phoneNumber,
             u.branch_id AS branchId,
             COALESCE(b.name, '-') AS branchName,

@@ -136,7 +136,8 @@ public class UserMngServiceImpl implements UserMngService {
 
         UserEntity savedUser = userRepository.save(userEntity);
 
-        if (isNew) {
+        // Handle role assignment for both new and existing users
+        if (StringUtils.isNotBlank(userMngSaveDTO.getRoleCd())) {
             RoleEntity roleEntity = roleRepository.findByRlCd(userMngSaveDTO.getRoleCd());
             
             // Auto-create role if not exists (for ADMIN role)
@@ -153,10 +154,19 @@ public class UserMngServiceImpl implements UserMngService {
                 throw new RestApiException(ApiStatus.NOT_FOUND);
             }
             
+            // For existing users, delete old roles first
+            if (!isNew) {
+                userRoleRepository.deleteAllByUserId(savedUser.getId());
+            }
+            
+            // Create new user role
             UserRoleEntity userRoleEntity = new UserRoleEntity();
             userRoleEntity.setUserId(savedUser.getId());
             userRoleEntity.setRlId(roleEntity.getRlId());
             userRoleRepository.save(userRoleEntity);
+        } else if (isNew) {
+            // Role is required for new users
+            throw new RestApiException(ApiStatus.BAD_REQUEST);
         }
 
         return true;
@@ -220,12 +230,14 @@ public class UserMngServiceImpl implements UserMngService {
             }
         }
 
-        // Get role name
+        // Get role name and code
         UserRoleEntity userRoleEntity = userRoleRepository.findByUserId(user.getId());
         if (userRoleEntity != null) {
             Optional<RoleEntity> roleEntityFind = roleRepository.findById(userRoleEntity.getRlId());
             if (roleEntityFind.isPresent()) {
-                userMngListDTO.setRoleNm(roleEntityFind.get().getRlNm());
+                RoleEntity roleEntity = roleEntityFind.get();
+                userMngListDTO.setRoleNm(roleEntity.getRlNm());
+                userMngListDTO.setRoleCd(roleEntity.getRlCd());
             }
         }
 

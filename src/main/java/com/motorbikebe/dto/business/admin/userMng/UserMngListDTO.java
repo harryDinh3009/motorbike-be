@@ -21,6 +21,8 @@ public class UserMngListDTO {
 
     private String roleNm;
 
+    private String roleCd;
+
     private String phoneNumber;
     
     private String address;
